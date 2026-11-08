@@ -1,0 +1,97 @@
+# Worked example: Alien vs. Predator (USA 940520), MAME set avspu, as ported in lamb2k/avpsaturn.
+# Addresses and sizes only. No ROM bytes, tables or game data. Copy to configs/<set>.yaml for your game
+# (configs/*.yaml other than *.example.yaml stay out of git).
+
+game:
+  set: avspu
+  description: "Alien vs. Predator (USA 940520)"
+  mame_version: "0.289"
+  players: 3
+
+paths:
+  # Local only. Use environment values or a private copy of this file; never commit real paths.
+  mame_exe: "${MAME_EXE}"
+  rompath: "${CPS2SAT_ROMPATH}"
+  work: "${CPS2SAT_WORK}"
+  nvram_baseline: "${CPS2SAT_NVRAM_BASELINE}"
+
+cpu:
+  # Level 2 IRQ entry fetch: golden.lua taps it and checks PC still reads as the vector.
+  irq_tap: [0xe0e, 0xe0f]
+  irq_vector_pc: 0x68
+  program_size: 0x200000
+
+ram:
+  work_base: 0xff0000
+  work_size: 0x10000
+  object_base: 0x708000
+  object_size: 0x2000
+  # I/O ranges whose reads the golden logs for host replay (inputs, EEPROM, sound status).
+  io_ranges:
+    - [0x800000, 0x80ffff]
+    - [0x618000, 0x619fff]
+
+inputs:
+  # Route word bit order. Each entry: [MAME port tag, field name].
+  route_bits:
+    - [":IN2", "Coin 1"]
+    - [":IN2", "1 Player Start"]
+    - [":IN0", "P1 Left"]
+    - [":IN0", "P1 Right"]
+    - [":IN0", "P1 Button 1"]
+    - [":IN0", "P1 Button 2"]
+    - [":IN0", "P1 Button 3"]
+    - [":IN0", "P1 Up"]
+    - [":IN0", "P1 Down"]
+    - [":IN2", "Coin 2"]
+    - [":IN2", "2 Players Start"]
+    - [":IN0", "P2 Left"]
+    - [":IN0", "P2 Right"]
+    - [":IN0", "P2 Button 1"]
+    - [":IN0", "P2 Button 2"]
+    - [":IN0", "P2 Button 3"]
+    - [":IN0", "P2 Up"]
+    - [":IN0", "P2 Down"]
+
+state:
+  # Work RAM bytes the port reads or sets. Found by watchpoints; see docs in the game repo.
+  stage_word: 0xff81e8
+  round_byte: 0xff8222
+  section_clear_flag: 0xff81f3
+  credit_byte: 0xff818c
+  continue_option: 0xff81be
+  difficulty: 0xff81cf
+  rank: 0xff81eb
+
+graphics:
+  # Offsets inside the combined graphics region as cps2_tiles.py reads it.
+  sprite_base: 0x000000
+  scroll_base: 0x800000
+  objects:
+    entries: 0x400
+    # CPS2 object x/y bias and the visible window, in CPS2 pixels.
+    x_bias: 64
+    y_bias: 16
+    relative_flag: 0x80
+    relative_dx: 0x40
+    relative_dy: 0x10
+    view_x: 80
+    view_y: 16
+    view_w: 352
+    view_h: 224
+
+rounds:
+  page_size: 0x400
+  shared_min: 10
+  # Stage words with their own round file (AvP: 20 stages, stage 0 is attract, front end and credits).
+  stages: [0x00, 0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0e, 0x10, 0x12, 0x14, 0x16, 0x18, 0x1a, 0x1c, 0x1e, 0x20, 0x22, 0x24, 0x26]
+  boss_rush: [0x04, 0x08, 0x0a, 0x1a, 0x24]
+
+disc:
+  cdr_sectors: 360000
+  pregap_sectors: 150
+
+saturn:
+  ip_load_address: 0x06004000
+  ip_read_size: 0
+  emulator_mcp_port: 9640
