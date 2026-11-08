@@ -1,0 +1,64 @@
+# cps2saturn
+
+**Intended for software preservation efforts.**
+
+This repository holds no ROMs, no game data, no generated assets, no captures and no disc images. It is tooling and
+method only. Work only from material you own or are otherwise authorized to use. See [NOTICE.md](NOTICE.md).
+
+## What it is
+
+A kit for porting Capcom CPS2 arcade games to native Sega Saturn code, using the 4 MB (32 Mbit) RAM cartridge.
+
+- **Playbook:** the phases, gates and staffing, from ROM identity to a release. [playbook/PLAYBOOK.md](playbook/PLAYBOOK.md)
+- **Claude Code skills:** one per area, so an agent can pick up any part of the work. [skills/](skills/)
+- **Tools:** game-neutral Python and MAME Lua tools. Game constants live in a per-game config. [tools/](tools/)
+- **Templates:** lane brief, hand-back, STATUS.md and release notes. [playbook/templates/](playbook/templates/)
+
+The approach: MAME is the reference, the game's own 68000 logic is lifted to C and then made readable, and the
+Saturn side (VDP1/VDP2, SCSP, CD, cart) is written natively. It is not an emulator running on the Saturn.
+
+## Quick start
+
+1. Install the requirements below.
+2. Copy `configs/avspu.example.yaml` to `configs/<yourset>.yaml` and fill in your game's values. Keep it out of git
+   if it holds anything derived from the ROM beyond addresses.
+3. Run the smoke tests: `python -m unittest discover -s tests -v`. They need no ROM.
+4. Read the playbook's phase 0 and the new-game checklist, then run the first MAME capture
+   (`tools/mame_golden_run.py --config configs/<yourset>.yaml --dry-run` shows the command it would run).
+5. Install the skills for Claude Code: copy each folder under `skills/` to `~/.claude/skills/` (or to your
+   project's `.claude/skills/`). Start with `cps2-saturn-port`.
+
+## Repo map
+
+| Path | What is there |
+| --- | --- |
+| `skills/` | Claude Code skills, one folder each with a `SKILL.md` |
+| `playbook/PLAYBOOK.md` | The long-form workflow, gates and lessons |
+| `playbook/templates/` | Lane brief, hand-back, STATUS.md, release notes |
+| `tools/` | Game-neutral tools (see `tools/README.md`) |
+| `tools/NOT-PORTED.md` | AvP tools left behind, with reasons |
+| `configs/` | Per-game config; `avspu.example.yaml` is the worked example |
+| `tests/` | Smoke tests, one per tool, no ROM needed |
+
+## Requirements
+
+- **MAME 0.289.** Pin the exact build. It is the reference for every behaviour check.
+- **Yabasanshiro** with its MCP control bridge (a debug build that serves memory reads, screenshots and pad input
+  over a local MCP port). Used for emulator-tier checks of the Saturn image.
+- **Saturn SH-2 toolchain:** SH-ELF GCC (9.x is known good) and a Saturn library such as Jo Engine or SGL.
+  You supply SGL yourself; it is not open source and is not included.
+- **Python 3.10 or newer.** Optional: `numpy` (audio compare), `capstone` (68000 disassembly), `PyYAML`
+  (configs; a small built-in reader covers the example format without it).
+- A host C compiler (GCC or Clang) for host-side differential tests of lifted code.
+
+## Worked example
+
+[AvP Saturn (lamb2k/avpsaturn)](https://github.com/lamb2k/avpsaturn) ports Alien vs. Predator (`avspu`) with this
+method: lifted 68000 game to C, whole-game host check against MAME to the ending, per-stage round files from CD,
+a shared sector store, home modes (duel, boss rush, stage select) and a music player. The playbook's
+"Lessons from AvP" section collects what it taught.
+
+## Licence
+
+Our own tools and docs are MIT. Nothing here is copied from GPL code. Details and open questions are in
+[NOTICE.md](NOTICE.md) and [LICENSE](LICENSE).
