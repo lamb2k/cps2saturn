@@ -42,12 +42,11 @@ later, they go in their own folder with the GPL-2.0 text and a note, and this ta
 Third-party tools you install (MAME, Yabasanshiro, SH-ELF GCC, Jo Engine, SGL, capstone, numpy) keep their own
 licences and are not bundled.
 
-## Open questions
+## Decisions (owner, 2026-11-08)
 
-- The copyright line names lamb2k and contributors. The owner should confirm the holder name.
-- The source AvP repository has no licence file. Relicensing its tools as MIT here rests on the owner being their
-  author. The owner should confirm that, and decide whether AvP Saturn gets the same licence.
-- Method notes were informed by other public projects (a game decompilation skill guide with no licence, and a
-  GPL-3.0 recompilation project). Only methods were taken, in our own words, and no code. Confirm that is acceptable
-  before any public release.
-- Whether the repo stays private. Its content is safe to publish under this notice, but that is the owner's call.
+The owner chose the options that avoid conflict:
+
+- **Holder:** the copyright line stays "lamb2k and cps2saturn contributors".
+- **Tool code from AvP Saturn:** the owner wrote it, so it is MIT here. AvP Saturn itself gets no open-source licence, because it holds code and data derived from the game. Only its original tooling is open, and that tooling lives here.
+- **Method notes:** they are methods only, written in our own words, with no code copied, so other projects' licences do not apply to them.
+- **Going public:** this repo stays private until AvP Saturn's release, and goes public with it.
