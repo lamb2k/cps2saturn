@@ -92,14 +92,11 @@ class SourceTest(unittest.TestCase):
 
     def test_sites_file_round_trip(self):
         # A sites file written from --list-sites keys (which hold one space) must be read back as reviewed.
-        src = self.tree({"x.c": "void f(u8*p){ u32 *q = (u32 *)p; }
-"})
+        src = self.tree({"x.c": "void f(u8*p){ u32 *q = (u32 *)p; }\n"})
         key = g.site_lines(src)[0][3]
         self.assertIn(" ", key)
         sites = src / "sites.txt"
-        sites.write_text(f"# reviewed
-{key} p is 4 aligned by the caller
-", encoding="utf-8")
+        sites.write_text(f"# reviewed\n{key} p is 4 aligned by the caller\n", encoding="utf-8")
         reviewed = g.load_list(str(sites))
         self.assertEqual(reviewed.get(key), "p is 4 aligned by the caller")
         hits = []
