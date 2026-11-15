@@ -70,10 +70,42 @@ getting long hands back early with that resume list rather than losing work.
 - An agent handed your hypothesis tends to return it confirmed. When you need an independent view, give the code,
   not the conclusion.
 
+## Hand-backs are model output
+
+A lane's report is a claim, written in the same confident voice whether it's right or wrong. Before relaying:
+- look at the stills and logs it names;
+- check one number yourself (a hash, a budget line, a count);
+- watch for scope it quietly changed (a different base, an inferred work folder, a hidden assist) and ask why.
+Lanes do surprising good work too: AvP's release lane rebuilt the test disc first to prove its recipe, unasked.
+Keep that kind of control in the brief next time.
+
+## Sessions end; work must not
+
+- Before a pause, write a handover in the workspace: what is live, every open lane with branch, tip and next step,
+  what was committed or pushed, and the traps found. Commit and push every dirty worktree as a WIP branch first.
+- A resume reads the handover, then checks for work done since: newer branches, evidence folders, and notes from
+  other sessions (local or cloud). The handover can be days stale.
+- Keep a one-line pointer to the handover in the agent's memory index.
+
+## Branches drift
+
+Lane branches can run hundreds of commits ahead of the default branch while the front page sits on the default.
+At each release, cut from the shipped source and make that the default; don't let the default branch rot.
+
+## Permission and safety denials
+
+When a tool call is refused (a permission prompt, a classifier, a hook), report it to the owner and stop that step.
+Never route around it, and never ask a lane to do what the main session was refused. Some actions (uploads, making
+things public) need the owner's direct yes in the main session; a lane can't get that.
+
 ## Cost discipline
 
 - Every agent has a purpose, an owner area and an end point. No speculative or duplicate agents.
 - Use stronger models for hard builds, debugging and design; cheaper ones for inventories, packaging, log scans.
+  On AvP a mid-size model at high effort handled most lanes well (builds, gates, captures, research); the
+  coordinator stayed on the strongest model to plan, review and land.
+- Research that means reading dozens of notes is a good lane: ask for a ranked digest with the evidence and the
+  target file, then write the result yourself.
 - One agent with sequential steps beats several overlapping ones.
 - Keep contexts small: brief by pointing at files. Suggest a fresh session at phase ends.
 

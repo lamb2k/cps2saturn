@@ -34,6 +34,34 @@ sector, count). Reading a round's runs in order gives its file back byte for byt
 before. Data sectors go in first-use order so each round's reads stay mostly sequential. AvP: data track 240,771
 to 94,143 sectors, all 210 rounds byte-identical. `tools/sector_store.py` builds and verifies it.
 
+## Loading
+
+- **Read count is the limit, not drive speed.** AvP's stage loads were dozens of small region reads, each paying a
+  command and a seek. Coalesce adjacent reads and read boot files in disc order.
+- Compression: deflate does well on tile and code data (about 0.5 to 0.65 of the size); byte-LZ barely helps 4-bit
+  tiles. The SH-2 decode (about 70 clocks a byte) is the bound, so overlap decode with the next read. Expect a modest
+  gain (AvP: about 1 s off an 8 s load).
+- Prove in-place decode fits for every file at build time, and refuse files that don't.
+- Emulators charge a flat seek time, so seek-order gains only show on hardware.
+
+## Loader corruption
+
+A read-coalescing change corrupted 157 of AvP's 287 stage files, and the self-check missed it: a rotating XOR
+cancels over overlapping regions. So:
+- Use a multiplicative checksum.
+- Replay the loader offline over every file (`tools/loader_replay.py`), with a control that runs the old loader and
+  proves the tool sees the bug.
+- Keep an in-game self-test over all files behind a test switch.
+
+## Build hygiene
+
+- A build tool that reuses an object because it is newer than its source will keep stale code when only the flags
+  change. Key objects on the flag set, or delete them when flags change.
+- Each source file is compiled with one flag family. A switch passed in the wrong family is silently ignored, so
+  check the switch reached the object (symbols or a string).
+- ISO volume dates differ on every build. Byte-identity checks compare members and the store, not the whole image.
+- Kept intermediates carry receipts (hashes of inputs, layout, packer and outputs); a mismatch forces a rebuild.
+
 ## Verify
 
 - `tools/iso_verify.py IMAGE PATH --equals FILE` checks one member byte for byte and prints its hash.
@@ -46,7 +74,9 @@ to 94,143 sectors, all 210 rounds byte-identical. `tools/sector_store.py` builds
 
 A browser Saturn emulator (a libretro Yabause build in WebAssembly) can run the image for testers:
 - Use the emulator's high-level BIOS. Never host a retail BIOS.
-- Large images need a compressed format the core accepts; check before uploading.
+- Large images need a compressed format the core accepts (CHD worked), split into parts if the uploader has a size
+  limit, with a manifest holding the parts and the whole-file hash. Upload parts first and the manifest last, and
+  keep a copy of the previous manifest as the rollback.
 - Hosting is outward-facing: it needs the owner's explicit OK, an access decision and written take-down steps.
 - Note browser speed (vblanks per second) in the notes; it is not Saturn timing.
 

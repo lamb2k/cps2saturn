@@ -53,6 +53,13 @@ refuse stale output.
 - Goal ladder: attract, then round 1 to its boss, then the whole game to the ending, then other characters and
   two players. Keep every golden green after each change (AvP keeps six).
 - A clean host run does not check cycle timing inside native kernel code. Say so.
+- **Prove the harness, not just the result.** Confirm the host runner links the code you think it does, and keep a
+  mutation control: a one-byte change to the code under test must make the diff diverge.
+- **Drive scripted input by the game's own tick,** not by vblank, so timing changes don't shift the input.
+- **Gameplay reads live input and state,** never capture labels. Shift the labels in a test to prove it.
+- A field the game reuses for different things in different phases needs a negative control in the phase where it
+  means something else.
+- Close whole routine families (every state of a state machine), not just the branches one route happened to take.
 
 ## Readable C campaign
 
@@ -65,6 +72,11 @@ that worked: kernel, pools and spawn, damage, player, enemy AI per class, effect
 New modes (duel, boss rush, stage select) sit behind build flags and touch the game through its own state: stage
 words, spawn tables, health fields, credit byte. Normal play must stay byte-identical with the flags off: prove it
 with the host check.
+
+- Never derive an identity from a byte the game changes (a blink, a death state, a co-op flag). Latch it.
+- Prefer patching data records over forking routines: copy the original record and change only what must change.
+- Quit to title and a new game must undo every runtime patch; dump the patched tables after several restarts.
+- Guest characters, swapped text and sounds, and saves: see `saturn-bonus-content`.
 
 ## Parity words
 

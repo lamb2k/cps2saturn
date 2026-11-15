@@ -15,8 +15,14 @@ description: Checklist of working rules for CPS2-to-Saturn ports. Use before lan
       the change claims no effect.
 - [ ] **Byte-identity proof for build changes.** A refactor, store, packer or layout change proves its outputs are
       byte-identical to before (rounds rebuilt from the store, ISO members compared, host goldens clean).
+- [ ] **Identity is proven on artifacts:** with a switch off, identical section binaries and symbol table, and an
+      ISO that differs only in volume dates. Plus a mutation control showing the check can fail.
 - [ ] **Test switches never ship.** Builds that keep stale intermediates (kept round files and the like) are for
-      quick tests only and are never packaged.
+      quick tests only and are never packaged. Debug readouts, profilers, self-tests and logs are compile-time
+      switches, off in every release recipe. Never hide one with a memory poke or a crop.
+- [ ] **No landed-but-off switches without a reason.** Keep a list of every landed switch that is neither on in the
+      release recipe nor parked with a reason and an owner. Move each forward or park it.
+- [ ] **Quit and restart undo every runtime patch.** Dump patched tables after several restarts: 0 bytes differ.
 
 ## Measuring
 
@@ -24,8 +30,13 @@ description: Checklist of working rules for CPS2-to-Saturn ports. Use before lan
       Mean and tail (p95, max), whole frame, not only the target function.
 - [ ] Roll back if p95 rises or the cost just moves elsewhere.
 - [ ] **Savings are hypotheses** until measured. Check what the build already has before calling something untried.
-- [ ] Label every number: HOST, MAME, EMULATOR, HARDWARE, MODELLED.
-- [ ] Record build, commit, scene, window, flags and asset path with every comparison.
+- [ ] Label every number: HOST, MAME, EMULATOR, MODELLED, ASSUMED, HARDWARE (CONSOLE).
+- [ ] Record build, commit, scene, window, flags, emulator copy and settings, and asset path with every comparison.
+- [ ] **A clean emulator run is not a console result.** Memory placement, VDP2 timing, misalignment and power-up
+      state only show on hardware. See `saturn-bringup` and `saturn-perf`.
+- [ ] Know which clock a counter counts. Game ticks against the arcade's own rate, not "frames done".
+- [ ] Keep load, KO and continue windows out of speed figures. Fresh save profile per run.
+- [ ] No percentage confidence from reasoning. Expected outcomes per case, a risk register, corrections in place.
 
 ## Evidence
 
@@ -44,11 +55,17 @@ description: Checklist of working rules for CPS2-to-Saturn ports. Use before lan
       "Coming soon" for the next build, and shows a still of each visible change (labelled emulator or console).
       Stills of game screens stay out of the public kit; in a game repo they go only where the owner allows.
 - [ ] Plain words, short sections, no walls of text.
+- [ ] **Public text reads like a person wrote it.** No "it's not X, it's Y", no bold label on every bullet, no
+      internal words (lanes, gates, recipes, switch names), no em dashes. Agent-facing docs stay out of the front
+      page, or get a plain one-line description.
+- [ ] Audit the whole README at each release: dead links, old plans and build commands that no longer build it.
 
 ## Repo hygiene
 
 - [ ] Never commit ROMs, extracted data, captures, stills of game screens, images or packages.
 - [ ] Run `tools/hygiene_scan.py` before every push: file types, sizes, binary content, private paths, keys.
+- [ ] Before a repo goes public, run `tools/hygiene_scan.py --history`: every branch and commit becomes public.
+      Check commit author emails too.
 - [ ] No private paths, host names, IPs, tokens or keys in code or docs. Use config or environment values.
 - [ ] Commit in logical steps. Never force-push a shared branch.
 
@@ -73,3 +90,5 @@ description: Checklist of working rules for CPS2-to-Saturn ports. Use before lan
 - [ ] Package hashes recorded; boot from the package cue.
 - [ ] Known issues listed; a non-blocking issue never blocks a release.
 - [ ] Hardware status stated plainly.
+- [ ] Release disc = test recipe minus test switches, with a control rebuild first. Media from the release disc.
+      Full method: `saturn-release`.

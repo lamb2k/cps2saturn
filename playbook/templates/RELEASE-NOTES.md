@@ -1,40 +1,65 @@
-# <Game> for Saturn: Test <N>
+<!--
+Write to players, in a plain voice. See skills/saturn-release.
+- One sentence on what it is, then how to get it. No "it's not X, it's Y".
+- No bold label on every bullet, no internal words (lanes, gates, recipes, switch names, build ids), no em dashes.
+- Say plainly what ran on a real Saturn and what was only tested on emulators.
+- Stills and clips come from this release's disc, labelled as emulator or console captures.
+- For a GitHub release body: one line per paragraph (GitHub keeps line breaks) and absolute links to the tag.
+Delete this comment before publishing.
+-->
 
-Intended for software preservation efforts. This download holds <what>; you need <cart, ODE or emulator>.
-See Known Issues before reporting.
+# <Game> Saturn v<version>
 
-## At a glance
+![<cover alt text>](<cover link>)
 
-- <the main change, in one line>
-- Plays: <extent, e.g. arcade mode start to ending, one player>
-- Tested on: <emulator name and build> (EMULATOR). Real Saturn: <UNRUN / result>.
+<Game>, <who made it and when>, running natively on the Sega Saturn. <One sentence on how, in plain words.>
 
-## What's new
+<One or two sentences on where this build stands: what you can play, the main rough edge, and that bug reports are
+welcome.>
 
-### <Visible change>
+## Download
 
-<one or two lines>
+Grab `<zip name>` below, unzip it, and load the `.cue` file.
 
-![<what the still shows> (emulator capture)](<raw URL of the still, where the owner allows stills>)
+You'll need one of these:
 
-### <Next change>
+- An NTSC Saturn with the 4 MB RAM cartridge, running the disc from an optical drive emulator or a burned CD-R.
+  The disc is <minutes> minutes long.
+- An emulator that supports the 4 MB cartridge.
 
-...
+<Browser link, if there is a hosted build.>
+
+## Screenshots
+
+![<what the clip shows>](<gif link>)
+
+**[Watch a <length> clip, with sound (MP4)](<mp4 link>)**
+
+| <Still 1> | <Still 2> | <Still 3> |
+|---|---|---|
+| ![<alt>](<link>) | ![<alt>](<link>) | ![<alt>](<link>) |
+
+*Captured in <emulator> from this disc.*
+
+## What's in this build
+
+- <Plain sentence per thing a player will notice.>
 
 ## Known issues
 
-- <issue>: <effect>, <workaround>. Tracked in <issue link>.
+- <What happens, and where. A workaround if there is one.>
+- <Hardware status: what has run on a real Saturn, and what has only been tested on emulators.>
 
-## Files
+If something looks, sounds or plays wrong, [open an issue](<issues link>) and say the stage and what was happening.
 
-| File | sha256 |
-| --- | --- |
-| <name> | <hash> |
+## Next up
 
-Built from commit <hash>, flags <flags>.
+- <Planned item, in plain words, no date.>
 
-## In progress: Test <N+1>
+## Legal
 
-Not in this download yet.
-- [ ] <planned item>
-- [x] <item that has passed its gates>
+<Project> is a fan preservation project. <Game> and its characters belong to their owners; see NOTICE.md. Only build
+from a ROM set you're entitled to use.
+
+---
+Disc zip SHA-256: `<hash>`

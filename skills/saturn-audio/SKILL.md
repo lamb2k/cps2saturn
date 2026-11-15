@@ -37,6 +37,24 @@ priority and report what dropped. Load clips at stage boundaries only.
 - Find the exact frame music starts by reading the state machine. The last legal data read is before it.
 - Avoid CD data seeks while CDDA plays unless the runtime path is measured safe. Load first, then start music.
 - After a load, restart the stage's music track.
+- **CD input level.** CDDA reaches the speakers through the SCSP's CD input send. AvP's per-stage sound swap cleared
+  every slot's registers, including that send, while a cached "level already set" flag stopped the rewrite: CD music
+  was silent from power-on until the first stage. Invalidate cached hardware state on every bulk register clear,
+  and check music on the title, story and select screens, not only in a stage.
+
+## Silent drops
+
+Two of AvP's tools dropped sounds without saying so: the clip builder skipped clips over a length limit (so looping
+sounds never played) and the budgeter dropped clips that had no table entry. Every drop must be counted and listed.
+
+Coverage check: log every sound command the arcade issues per scene in MAME, then log the Saturn's outcome for each
+(played, refused, missing from this stage). Rank the gaps by how often the arcade plays them.
+
+## Fitting more clips
+
+Pick a sample rate per clip. A clip with almost no energy above a lower rate's Nyquist (AvP: 1% bound) can drop to
+8 kHz or 5.5 kHz with no audible loss; bright sounds and voices keep 11 kHz. Keep level (RMS) and pitch (the clip's
+rate sets the SCSP octave and frequency). AvP saved 21.6% and fit back almost all the sounds it had dropped.
 
 ## Sound test and music player
 

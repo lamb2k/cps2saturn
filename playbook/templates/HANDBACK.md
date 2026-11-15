@@ -8,15 +8,25 @@
 | --- | --- |
 | <hash> | <subject> |
 
-Branch `lane/<name>` at <hash>, pushed: <yes/no>.
+Branch `lane/<name>` at <hash>, pushed: <yes/no>. Dirty files left: <none / list>.
+Base used: <commit or work folder, and how you know it is the right one>.
 
 ## Proven
 
 | Claim | Tier | Evidence |
 | --- | --- | --- |
-| <claim> | HOST / MAME / EMULATOR / HARDWARE / MODELLED | <log, still or hash, path> |
+| <claim> | HOST / MAME / EMULATOR / MODELLED / ASSUMED / HARDWARE | <log, still or hash, path> |
 
-Image: <file> sha256 <hash>, build flags <flags>.
+Image: <file> sha256 <hash>, build flags <flags>, emulator copy and settings <name, patches, profile>.
+
+## Staging and assists
+
+- <anything that helped the run or the capture: health held, memory writes, settings changed, frames cut; or none>
+- <anything you inferred rather than were told, and why>
+
+## Changed from the brief
+
+- <scope you changed, and why; or none>
 
 ## Not proven
 

@@ -12,8 +12,15 @@ Label every number and claim:
 - **MAME:** the arcade reference.
 - **EMULATOR:** the Saturn image on Yabasanshiro (or another Saturn emulator). Emulator timers are not Saturn
   timing; write MODELLED for any frame-cost figure from them.
-- **HARDWARE:** a real Saturn with the 4 MB cart. Only the owner can produce this. UNRUN until then.
-Never let a lower tier advance a higher tier's status.
+- **HARDWARE / CONSOLE:** a real Saturn with the 4 MB cart, usually the owner's photos of an on-screen readout.
+  Only the owner can produce this. UNRUN until then.
+- **MODELLED:** an emulator run with a cost model added (see `saturn-perf`). **ASSUMED:** a figure you couldn't
+  find published, used in a model. Say which.
+Never let a lower tier advance a higher tier's status. Record the emulator build, your patches and its settings with
+every number: two copies of the same emulator with different settings give different results.
+
+Emulators forgive misaligned accesses, VDP2 access-cycle mistakes, memory placement cost and power-up RAM contents.
+A clean emulator run says little about those; see `saturn-bringup`.
 
 ## The Yaba MCP harness
 
@@ -28,6 +35,21 @@ A debug build of Yabasanshiro serves an MCP endpoint on a local port: memory rea
 - Retry reads that answer empty while the core starts or during a long CD read.
 - Restore the user's emulator settings after the run; edit a copy of the ini, never the user's only copy.
 - Memory writes take bytes as a hex string; a list of ints may silently write nothing.
+- One MCP session per emulator. A second session froze the core; add a quiet-log watchdog.
+- Save states may not hold every hardware flag (AvP: the VDP1 draw-end flag). Re-check anything timing-related
+  after a load.
+- Each lane's patched emulator writes logs to its own folder. One lane's logger overwrote another's evidence.
+- Use a fresh backup-RAM profile per run. A saved option silently changed a "default" run.
+- Harnesses that scan fixed RAM ranges for a marker go stale when the memory layout changes. Take addresses from
+  the ELF or the config.
+- Some renderers hide faults others show (a VDP1 race showed in one video core only). Test visual fixes on two.
+
+## A window for the owner
+
+When the owner watches or plays a build on your PC, give them a window that works the first time: a known-good
+renderer setting, its own emulator folder and ini (never a lane's), its own screen position, brought to the front,
+and a capture checked to show a picture (boots can be black for a while) before you say it's ready. Lanes never
+edit the owner's emulator settings.
 
 ## Pad-only proofs
 
@@ -36,6 +58,9 @@ A proof of play uses only real pad input through the game's own latch.
 - **Closed-loop bot:** reads RAM over MCP (read only) and picks keys. Good for getting through a stage.
 - **Memory-poke bots are diagnostics,** not proofs. If a run sets health or boss state over MCP, label it
   DIAGNOSTIC and do not count it as play. Prove the same feature again pad-only.
+- Assists (invulnerability, boss health, warps) live in the harness, never in a build. Use the same bot for the
+  switch-off, switch-on and baseline arms.
+- Assisted or non-deterministic bot runs trigger investigations; they are not measurements.
 
 ## Short runs
 

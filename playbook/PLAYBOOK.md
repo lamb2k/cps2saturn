@@ -76,27 +76,49 @@ drawing, the memory map with real numbers.
 Gate: round 1 start to boss clear on the emulator with real pad input (scripted or bot, pad only), host check
 green to the same point, image hash recorded.
 
-### Phase 5: whole game, fit and speed
+### Phase 5: whole game and fit
 
-Work: census of every stage over many routes; round files from CD; shared pages; drop ranking; missing-tile
-counter; profile and readable C for hot paths.
+Work: census of every stage over many routes plus button fuzz; round files from CD; shared pages; drop ranking;
+missing-tile counter; coalesced loads.
 
 Gate: whole game to the ending on the emulator image (legs joined by save states are fine; say so), dropped
-keys reported per stage, frame cost measured and labelled.
+keys reported per stage.
 
-### Phase 6: home features
+### Phase 6: console bring-up
 
-Work: title menu, options, sound test, music player, NOW LOADING, home modes. See section 6.
+Start as soon as round 1 plays on an emulator; don't wait for the whole game. Skill: `saturn-bringup`.
+
+Work: first hardware discs with on-screen diagnostics and a build id; static gates (VDP2 access cycles, alignment,
+display latch); a register-write diff against a known-good program; the 1:1 crop as the first display control;
+a hardware test sheet saying what to photograph.
+
+Gate: boots and plays round 1 on the owner's Saturn, from photos; every console fault listed with a cause or an
+open risk.
+
+### Phase 7: speed on the console
+
+Skill: `saturn-perf`. Work: the game's own tick rate measured on the arcade and on the console readout; a
+region-aware cost model calibrated to one console photo; hot code and data placed by measured heat; repeated work
+removed; each change proven exact.
+
+Gate: the busiest scene runs at the arcade's tick rate on the console, or the gap is measured, labelled and on the
+known-issues list.
+
+### Phase 8: home features
+
+Work: title menu, options, sound test, music player, NOW LOADING, home modes, bonus content. See section 6 and the
+`saturn-bonus-content` skill.
 
 Gate per feature: a pad-only run shows it working; with its flag off, the host check and normal play are
 unchanged; the owner has seen stills of anything visible.
 
-### Phase 7: release
+### Phase 9: release
 
-Work: clean package build, disc budget, hashes, hardware test sheet, notes with stills, known issues.
+Skill: `saturn-release`. Work: the release disc (test recipe minus test switches, control rebuild first), gates on
+the final disc, media from that disc, notes in a plain voice, history audit before anything goes public.
 
 Gate: package built clean from a recorded commit; booted from the package cue; hashes recorded; the release
-notes state hardware status plainly (UNRUN until the owner runs it).
+notes state hardware status plainly.
 
 ## 3. Staffing and briefing lanes
 
@@ -119,6 +141,12 @@ notes state hardware status plainly (UNRUN until the owner runs it).
 | home | title menu, options, sound test, music player, boss rush |
 | duel | duel mode rules, arena, HUD |
 | web | browser test build (local until the owner approves hosting) |
+| hwboot | console discs, diagnostics, register diff, static hardware gates |
+| perf-hw | cost model, placement by heat, console readout |
+| loading | read coalescing, compression, loader replay |
+| coverage | sound and sprite coverage gaps against the arcade |
+| bonus | guest character, swapped text and sound, unlocks |
+| release | release disc, gates, media, notes |
 
 Run as many lanes as have clear, non-overlapping deliverables. Cap how many run heavy builds or emulators at once.
 
@@ -233,6 +261,29 @@ ending on the emulator, home modes. What it taught:
    and jump, and from a side store that cut byte tables at 256 bytes. Scan for unresolved tables after each route.
 10. **Capcom menu conventions** made the home build feel right at once (section 6). NOW LOADING and the music
     player were cheap and much noticed.
+11. **The first console boot failed while every emulator was clean.** The causes were things emulators don't check:
+    VDP2 access cycles for reduced layers, a missing clock change for 352-wide mode, SMPC command order, a misaligned
+    read that froze one dialogue box. A register-write diff against a working program found most of them. Start
+    console work early.
+12. **The console ran two to three times slower than the emulator** because hot code and data sat in slow RAM. A
+    flat-cost emulator can't show that; a region-aware model, calibrated once against a console photo, did.
+13. **"Frame rate" was the wrong counter.** A task-walk counter read low while the game ticked at the arcade's rate.
+    Measure the game's own tick clock on the arcade first.
+14. **Removing repeated work beat clever tricks.** Memoising a text-layer fit took the busiest scene from 40 to 60
+    pictures a second (MODELLED). Command pairing and slot hints measured slower.
+15. **Landed fixes sat switched off** for days and missed the console discs. Keep a list of landed-but-off switches.
+16. **A loader speed-up corrupted half the stage files,** and the XOR self-check couldn't see it. Multiplicative
+    sums and an offline replay of every file.
+17. **CD music was silent before the first stage** because a sound swap cleared the CD input level and a cached flag
+    stopped the rewrite. Invalidate cached hardware state on bulk clears; listen on the title screen.
+18. **A display-register latch** mixed old and new pictures and blacked out a full-screen reveal. One coherent
+    record per vblank, model-checked.
+19. **The guest character vanished at KO** because its identity came from a byte the death blink toggled. Latch
+    identities.
+20. **The release almost shipped a debug readout.** It was always drawn; the first media hid it with emulator
+    pokes. Readouts are compile-time switches, off in the release recipe, and media comes from the release disc.
+21. **Branches drifted.** The default branch sat 600 commits behind the shipped source, and release notes were
+    drafted for a build two weeks older than the one shipping. Check what each candidate holds before writing.
 
 ## 8. Templates
 

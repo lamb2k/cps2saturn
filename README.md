@@ -11,6 +11,7 @@ A kit for porting Capcom CPS2 arcade games to native Sega Saturn code, using the
 
 - **Playbook:** the phases, gates and staffing, from ROM identity to a release. [playbook/PLAYBOOK.md](playbook/PLAYBOOK.md)
 - **Claude Code skills:** one per area, so an agent can pick up any part of the work. [skills/](skills/)
+  See the skills table below.
 - **Tools:** game-neutral Python and MAME Lua tools. Game constants live in a per-game config. [tools/](tools/)
 - **Templates:** lane brief, hand-back, STATUS.md and release notes. [playbook/templates/](playbook/templates/)
 
@@ -27,6 +28,26 @@ Saturn side (VDP1/VDP2, SCSP, CD, cart) is written natively. It is not an emulat
    (`tools/mame_golden_run.py --config configs/<yourset>.yaml --dry-run` shows the command it would run).
 5. Install the skills for Claude Code: copy each folder under `skills/` to `~/.claude/skills/` (or to your
    project's `.claude/skills/`). Start with `cps2-saturn-port`.
+
+## Skills
+
+| Skill | Use it for |
+| --- | --- |
+| `cps2-saturn-port` | Start here: the phases, their gates, and which skill handles what |
+| `cps2-capture` | MAME goldens, routes, watchpoints, debug menus |
+| `sh2-game-logic` | Lifting 68000 code to C, host checks against MAME, readable C |
+| `saturn-graphics` | VDP1 sprites, VDP2 layers, screen fit, HUD, display registers, cart pages and stage files |
+| `saturn-audio` | Sound effects on the SCSP, music as CD audio, sound coverage |
+| `saturn-packaging` | ISO, cue, IP.BIN, disc budget, loading, web builds |
+| `emulator-testing` | Emulator runs, pad-only proofs, stills, evidence labels |
+| `saturn-bringup` | First boots on a real Saturn and the faults only hardware shows |
+| `saturn-perf` | Getting to full speed on a console, not just on an emulator |
+| `saturn-bonus-content` | Guest characters, new modes and saves without touching arcade play |
+| `saturn-release` | Release disc, gates, media, notes, going public |
+| `clip-capture` | Frame-exact clips and stills from the emulator |
+| `video-assemble` | Cutting captured clips into a video |
+| `agent-orchestration` | Running several AI agents on one port |
+| `best-practices` | The checklist before landing, measuring or releasing |
 
 ## Repo map
 
@@ -55,8 +76,8 @@ Saturn side (VDP1/VDP2, SCSP, CD, cart) is written natively. It is not an emulat
 
 [AvP Saturn (lamb2k/avpsaturn)](https://github.com/lamb2k/avpsaturn) ports Alien vs. Predator (`avspu`) with this
 method: lifted 68000 game to C, whole-game host check against MAME to the ending, per-stage round files from CD,
-a shared sector store, home modes (duel, boss rush, stage select) and a music player. The playbook's
-"Lessons from AvP" section collects what it taught.
+a shared sector store, home modes (duel, boss rush, stage select), a bonus character, console bring-up and a
+public beta. The playbook's "Lessons from AvP" section collects what it taught.
 
 ## Licence
 

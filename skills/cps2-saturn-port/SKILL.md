@@ -42,9 +42,14 @@ Each phase ends when its gate passes. Label every result with its tier: HOST, MA
 | 2 Translator | Lifter, boundary convergence (0 unresolved targets or jump tables), semantics audit, generation receipts | Audit suite passes and a frozen-bad generator fails it |
 | 3 Host check | Lifted game on PC against MAME goldens, per vblank, work RAM + object RAM | Clean to the end of round 1, then to the ending |
 | 4 Saturn layer | Sprites, scroll layers, palettes, pad, audio, slave SH-2, memory map | Round 1 plays on the emulator with real pad input |
-| 5 Fit and speed | Round files, cart pages, drop ranking, profile, readable C for hot paths | Whole game on the emulator image; frame cost measured |
-| 6 Home features | Title menu, options, sound test, music player, home modes | Each feature proven by a pad-only run; normal play unchanged |
-| 7 Release | ISO/cue with CDDA, disc budget, hardware test sheet, notes with stills | Package hashes recorded; hardware status stated as UNRUN until the owner runs it |
+| 5 Fit | Round files, cart pages, drop ranking, fuzz census, loading | Whole game on the emulator image; dropped keys per stage reported |
+| 6 Console | First hardware discs with on-screen diagnostics, static hardware gates, register diff, crop control | Boots and plays round 1 on a real Saturn (owner photos); faults listed |
+| 7 Speed | Memory placement by heat, repeated work removed, game ticks against the arcade's rate | Busiest scene at the arcade's tick rate on the console, or the gap measured and labelled |
+| 8 Home features | Title menu, options, sound test, music player, home modes, bonus content | Each feature proven by a pad-only run; normal play unchanged |
+| 9 Release | Release disc without test switches, gates on it, media, notes, publish | Package hashes recorded; hardware status stated plainly |
+
+Start console work (phase 6) as soon as round 1 plays on an emulator. Emulators hide the faults and the slowness
+that only a Saturn shows, and finding them late costs the most.
 
 Never skip a gate silently. If a gate cannot run, say so and say why.
 
@@ -56,6 +61,11 @@ Never skip a gate silently. If a gate cannot run, say so and say why.
 - Lifting, readable C, host differential, parity tests: `sh2-game-logic`.
 - ISO, cue, IP.BIN, CD-R budget, shared sector store, web builds: `saturn-packaging`.
 - Yaba MCP runs, pad scripts, stills, evidence labels: `emulator-testing`.
+- First boots on a real Saturn, hardware-only faults, VDP2 timing, register diffs: `saturn-bringup`.
+- Console speed, memory placement, game-tick measurement, exactness of speed fixes: `saturn-perf`.
+- Guest characters, new modes, swapped text and sound, saves: `saturn-bonus-content`.
+- Release disc, gates, media, notes, going public, web build updates: `saturn-release`.
+- Frame-exact clips and stills from the emulator: `clip-capture`. Cutting them into a video: `video-assemble`.
 - Running several agents at once: `agent-orchestration`.
 - The checklist for everything else: `best-practices`.
 
