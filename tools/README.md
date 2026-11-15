@@ -29,6 +29,20 @@ Run the smoke tests with `python -m unittest discover -s tests -v`. They use syn
 
 Not ported, and why: [NOT-PORTED.md](NOT-PORTED.md).
 
+## Hardware gates
+
+Checks for what emulators forgive and a console does not. Each exits 0 pass, 1 fail, 2 bad input, and takes its
+inputs from files, never from a game header.
+
+| Tool | Area | What it does |
+| --- | --- | --- |
+| `vdp2_cycle_check.py` | graphics | VDP2 VRAM access-cycle rules from a JSON/YAML spec or a register-write trace: name and cell read counts per layer (reduced layers need 2+2), legal cell timing for the name timing, split-bank CPU slots with a no-access slot in front |
+| `align_gate.py` | SH-2 build | 2/4-byte alignment of data symbols from nm output, literal offsets of wide accessors, and a reviewed list of pointer-cast sites; emulators allow what the SH-2 faults on |
+| `latch_model.py` | SH-2 timing | Exhaustive interleaving model of a publish/apply protocol: a per-register latch mixes old and new values, a sequence-word snapshot never does |
+| `loader_replay.py` | loading | Replays a JSON read plan (coalesced or not) over files into a memory model; compares final regions with sequential loading; multiplicative checksum, because a rotating xor cancels over overlapping regions |
+| `lookdiff.py` | testing | Pixel diff of two stills or two folders: changed-pixel share, bounding box, masks, a limit for gating, optional A / B / diff image; stdlib PNG, Pillow optional |
+| `hygiene_scan.py --history` | repo | Scans every blob reachable from any ref (deleted files stay in history) for blocked types, size, private paths and keys; `--allow-media` or `.hygiene-media` names folders where owner-approved release media may live |
+
 ## Environment values the MAME scripts read
 
 `golden.lua`: `CPS2SAT_OUT`, `CPS2SAT_IRQ_TAP`, `CPS2SAT_IRQ_VECTOR`, `CPS2SAT_WORK`, `CPS2SAT_OBJ`, `CPS2SAT_IO`,
