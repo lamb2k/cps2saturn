@@ -30,6 +30,13 @@ A debug build of Yabasanshiro serves an MCP endpoint on a local port: memory rea
 - **One instance per lane.** Each lane gets its own emulator folder with its own ini and its own MCP port. Check the
   port's owner pid before driving it: two lanes can both see a port free, start, and one bot then drives the other
   lane's machine.
+- **Claim before you start.** Write a claim file in the emulator folder (lane, pid, start time) and remove it when
+  done. A lane that finds another lane's live claim waits or uses its own copy. Stale claims (pid gone) may be
+  taken over, with a note in the log.
+- **Stop only what you started.** Record the pid when you launch. Stop that pid, or match the full command line
+  including your own folder. Never stop emulators by name: the owner's window and other lanes' runs share it.
+- **Back up what you replace.** Before swapping a disc image, ini, BIOS path or save file in a shared folder, copy
+  the original and record its hash. Put it back after the run and check the hash matches.
 - **Own window only.** Pad input goes to the emulator's own window handle (PostMessage key down/up) or through the
   MCP pad call. Never use global input (SendKeys, keybd_event, SendInput).
 - Retry reads that answer empty while the core starts or during a long CD read.

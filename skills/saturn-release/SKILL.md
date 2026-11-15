@@ -1,6 +1,6 @@
 ---
 name: saturn-release
-description: Releasing a CPS2-to-Saturn port. Use when cutting a test or beta release, building the release disc from a test recipe, gating it, capturing release media, writing release notes and front pages, auditing a repo before making it public, publishing on GitHub, and updating a hosted web build with a rollback.
+description: Releasing a CPS2-to-Saturn port. Use when cutting a test or beta release, building the release disc from a test recipe, gating it, capturing release media, writing release notes and front pages, auditing a repo before making it public, publishing on GitHub, updating a hosted web build with a rollback, and handling player reports after release (triage, replies, regressions).
 ---
 
 # Releasing a port
@@ -74,6 +74,27 @@ Going public exposes every branch and every commit, not just the default branch.
 2. Create the release (prerelease for a beta) with the disc zip and its SHA-256 in the notes.
 3. Change visibility only after the release looks right.
 4. Check as a signed-out visitor: front page, release images, asset download.
+
+## After release: player reports
+
+Once a build is public, player reports are the main source of bugs. Run every report through the same loop.
+
+1. **Read it all.** Download attachments (photos, logs, save files) to a folder per issue and read the whole log,
+   not just the last error. Note the disc version, emulator or console, cart, region and settings.
+2. **Group them.** Keep one table of similar reports: stage, scene, character, mode, what happened, setup. Look for
+   what the reports share before chasing any single one. A bot's or a model's suggested links between issues are a
+   starting point, not a finding.
+3. **Ask once, for what you need.** The disc's zip name, the emulator and version, a photo or clip, how to reach it.
+   No test data or internal words in the reply.
+4. **Reproduce on the released disc,** not a newer build, before calling it known or fixed.
+5. **Fix in the next build,** with a Known issues line until then.
+6. **On release,** reply one line under each issue it fixes: what changed and the release link. Close the issue
+   only when the reporter confirms, or after a stated wait with no reply.
+7. **Regressions:** if a release breaks something the previous one did right, take it back (re-point the download
+   and the web build to the previous release), ship a fixed build as a new version, then say so publicly. Don't
+   pile an untested fix on top of a bad release.
+
+GitHub replies and posts are outward-facing: they need the owner's OK unless a standing rule covers them.
 
 ## Hosted web build
 

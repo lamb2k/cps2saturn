@@ -42,6 +42,22 @@ later, they go in their own folder with the GPL-2.0 text and a note, and this ta
 Third-party tools you install (MAME, Yabasanshiro, SH-ELF GCC, Jo Engine, SGL, capstone, numpy) keep their own
 licences and are not bundled.
 
+## Methods learned from other projects
+
+Two projects shaped how AvP Saturn was built. We learned methods from them and wrote our own versions in our own
+words. No code or text from either is copied here.
+
+- **LORecomp** ([freefrank/LostOdysseyRecomp](https://github.com/freefrank/LostOdysseyRecomp), GPL-3.0), a static
+  recompilation of Lost Odyssey. Its recompiler width and control-flow audit, generation guard, issue triage and AI
+  workflow notes led to the kit's boundary convergence, semantics audit, generation receipts, the four work states
+  and the player issue loop.
+- **Game Decompilation Skill for Claude**
+  ([lemiur/Game-Decompilation-Skill-For-Claude](https://github.com/lemiur/Game-Decompilation-Skill-For-Claude)).
+  AvP's backlog drew on its case for decompiling over emulating and on its parallel-worker discipline, which fed
+  the lift-then-make-readable approach.
+
+Credit for those ideas goes to their authors. Their licences cover their own repositories, not this one.
+
 ## Decisions (owner, 2026-11-08)
 
 The owner chose the options that avoid conflict:

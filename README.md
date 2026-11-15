@@ -79,6 +79,13 @@ method: lifted 68000 game to C, whole-game host check against MAME to the ending
 a shared sector store, home modes (duel, boss rush, stage select), a bonus character, console bring-up and a
 public beta. The playbook's "Lessons from AvP" section collects what it taught.
 
+## Credits
+
+The method owes a lot to two other projects:
+[LORecomp](https://github.com/freefrank/LostOdysseyRecomp) (Lost Odyssey static recompilation) and the
+[Game Decompilation Skill for Claude](https://github.com/lemiur/Game-Decompilation-Skill-For-Claude). We took ideas,
+not code. See [NOTICE.md](NOTICE.md).
+
 ## Licence
 
 Our own tools and docs are MIT. Nothing here is copied from GPL code. Details and open questions are in

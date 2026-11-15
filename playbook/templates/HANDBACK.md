@@ -11,6 +11,9 @@
 Branch `lane/<name>` at <hash>, pushed: <yes/no>. Dirty files left: <none / list>.
 Base used: <commit or work folder, and how you know it is the right one>.
 
+State: implemented <yes, pushed / no> / tested <tier> / accepted <no, needs owner look / owner, date> /
+released <no / version>.
+
 ## Proven
 
 | Claim | Tier | Evidence |

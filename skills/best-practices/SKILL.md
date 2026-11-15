@@ -43,7 +43,16 @@ description: Checklist of working rules for CPS2-to-Saturn ports. Use before lan
 - [ ] Look at the stills and logs yourself before reporting.
 - [ ] Still pairs (MAME left, Saturn right) before calling something a bug.
 - [ ] Pad-only proofs for features; memory pokes are DIAGNOSTIC.
+- [ ] **Four states, kept apart:** implemented (landed and pushed), tested (at a named tier), accepted (the owner
+      says it looks and plays right) and released (in a published build). Record each separately. A landed fix
+      that is off in the release recipe is implemented, not released. A closed issue is not an accepted fix.
 - [ ] "Done" means pushed plus checked. Say "coded, unrun" otherwise.
+- [ ] **Not reproduced is not fixed.** A failed reproduction proves nothing until the same route reproduced the bug
+      before the change. Forcing a fault (a memory poke, a widened window) shows the old fault is gone, not that
+      the new code is safe.
+- [ ] Scale the testing to the change: one smoke run for a small change, the full set when a gate or a release
+      needs it. A/B comparisons keep a baseline and run in ABBA order so drift cancels.
+- [ ] On looks, the owner's eye beats a metric. Say which build and settings are on screen.
 - [ ] Report what was not run as clearly as what was.
 
 ## Docs
@@ -51,6 +60,8 @@ description: Checklist of working rules for CPS2-to-Saturn ports. Use before lan
 - [ ] **STATUS.md is the one source of current state.** The backlog holds order, not state.
 - [ ] Notes are marked Reference, Historical, Investigation or Draft. Old numbers never count as today's baseline.
 - [ ] Record owner decisions the same turn.
+- [ ] Each fact lives in one place; other docs link to it. Old notes keep their conclusions; a later finding adds
+      a dated correction line instead of rewriting them.
 - [ ] **Front pages and release notes:** each release updates the README "At a glance" and "What's new", keeps a
       "Coming soon" for the next build, and shows a still of each visible change (labelled emulator or console).
       Stills of game screens stay out of the public kit; in a game repo they go only where the owner allows.
@@ -80,7 +91,8 @@ description: Checklist of working rules for CPS2-to-Saturn ports. Use before lan
 ## Safety
 
 - [ ] `${VAR:?}` on every `rm` with a variable. Own scratch folder per lane.
-- [ ] No global input. Kill only processes you started.
+- [ ] No global input. Kill only processes you started, matched by their full command line or pid, never by
+      name (`pkill -f`, `taskkill /im`). See `emulator-testing` for emulator claims and file backups.
 - [ ] Outward-facing steps (publish, host, post) need the owner's OK unless a standing rule covers them.
 
 ## Release

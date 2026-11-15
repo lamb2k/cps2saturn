@@ -5,8 +5,11 @@ Only source of current state. Branch `<main branch>`. Backlog: docs/BACKLOG.md.
 - Phase: <n, name>. Gate: <passed / open: what remains>.
 - Hardware: UNRUN. <or: date, console, cart, result>
 - Current package: <name>, ISO sha256 <hash>, from commit <hash>.
+- Released: <version, date, link; or none>.
 
 ## <Topic>, <date> (<lane>; <TIER>; hardware UNRUN)
+
+State: implemented <commit> / tested <tier> / accepted <owner, date or no> / released <version or no>
 
 <What was done, in plain words. Lead with the result.>
 
