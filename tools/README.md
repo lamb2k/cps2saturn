@@ -41,6 +41,7 @@ inputs from files, never from a game header.
 | `latch_model.py` | SH-2 timing | Exhaustive interleaving model of a publish/apply protocol: a per-register latch mixes old and new values, a sequence-word snapshot never does |
 | `loader_replay.py` | loading | Replays a JSON read plan (coalesced or not) over files into a memory model; compares final regions with sequential loading; multiplicative checksum, because a rotating xor cancels over overlapping regions |
 | `lookdiff.py` | testing | Pixel diff of two stills or two folders: changed-pixel share, bounding box, masks, a limit for gating, optional A / B / diff image; stdlib PNG, Pillow optional |
+| `hygiene_scan.py --history` | repo | Scans every blob reachable from any ref (deleted files stay in history) for blocked types, size, private paths and keys; `--allow-media` or `.hygiene-media` names folders where owner-approved release media may live |
 
 ## Environment values the MAME scripts read
 
