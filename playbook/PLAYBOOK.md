@@ -291,3 +291,4 @@ ending on the emulator, home modes. What it taught:
 - [Hand-back](templates/HANDBACK.md)
 - [STATUS.md](templates/STATUS.md)
 - [Release notes](templates/RELEASE-NOTES.md)
+- [Trailer or reveal clip](templates/TRAILER.md)
