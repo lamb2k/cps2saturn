@@ -37,6 +37,7 @@ inputs from files, never from a game header.
 | Tool | Area | What it does |
 | --- | --- | --- |
 | `vdp2_cycle_check.py` | graphics | VDP2 VRAM access-cycle rules from a JSON/YAML spec or a register-write trace: name and cell read counts per layer (reduced layers need 2+2), legal cell timing for the name timing, split-bank CPU slots with a no-access slot in front |
+| `align_gate.py` | SH-2 build | 2/4-byte alignment of data symbols from nm output, literal offsets of wide accessors, and a reviewed list of pointer-cast sites; emulators allow what the SH-2 faults on |
 
 ## Environment values the MAME scripts read
 
