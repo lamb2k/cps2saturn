@@ -360,3 +360,19 @@ Methods from many of them are written up in the skills and the playbook instead.
 - `tools/verify_rowscroll_classification.py`: AvP analysis, generator or check, fixed to its ROM layout, actors, stages or evidence.
 - `tools/verify_scene_manifest.py`: AvP analysis, generator or check, fixed to its ROM layout, actors, stages or evidence.
 - `tools/verify_street_planes.py`: AvP analysis, generator or check, fixed to its ROM layout, actors, stages or evidence.
+
+## Clips and video
+
+Ported from the private AvP Saturn skills (game-neutral parts only): `tools/clip/shot_script.py` (route and take
+language, with every game constant moved to the config's `capture:` section), `tools/clip/align_audio.py` (the clock
+fit and median-latency method, with no fixed recorder or disc paths), `tools/video/assemble.py` and
+`tools/video/mix.py`. The AvP menu routes, the process-loopback recorder and the disc layout stay behind.
+
+- **Exact game sound from a sound-chip dump (method only).** The real-time alignment is only as good as the audio
+  pipeline's jitter. The exact alternative needs an emulator patched to write the sound chip's own output (raw 44.1 kHz
+  16 bit stereo) in emulated time, whatever the host does. Replay the stepped take from the same saved state with the same
+  keys on a disc whose CD audio tracks are zero-filled (so only game sound effects and voices remain). Stepping is
+  deterministic, so the replay's pictures equal the original take's (check by hashing them) and the dump position at the
+  end of every stepped chunk is known. Fit samples against picture number (line fit; the residual is the writer's
+  jitter) to get the dump sample at the start of each picture, cut from picture 0, and measure event onsets as in
+  `align_audio.py`. It is not ported because the dump is a patch against GPL-2.0 emulator code (see NOTICE.md).
