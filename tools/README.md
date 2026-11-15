@@ -29,6 +29,15 @@ Run the smoke tests with `python -m unittest discover -s tests -v`. They use syn
 
 Not ported, and why: [NOT-PORTED.md](NOT-PORTED.md).
 
+## Hardware gates
+
+Checks for what emulators forgive and a console does not. Each exits 0 pass, 1 fail, 2 bad input, and takes its
+inputs from files, never from a game header.
+
+| Tool | Area | What it does |
+| --- | --- | --- |
+| `vdp2_cycle_check.py` | graphics | VDP2 VRAM access-cycle rules from a JSON/YAML spec or a register-write trace: name and cell read counts per layer (reduced layers need 2+2), legal cell timing for the name timing, split-bank CPU slots with a no-access slot in front |
+
 ## Environment values the MAME scripts read
 
 `golden.lua`: `CPS2SAT_OUT`, `CPS2SAT_IRQ_TAP`, `CPS2SAT_IRQ_VECTOR`, `CPS2SAT_WORK`, `CPS2SAT_OBJ`, `CPS2SAT_IO`,
