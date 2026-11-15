@@ -69,8 +69,13 @@ def load_list(path: str | None) -> dict[str, str]:
         for line in p.read_text(encoding="utf-8").splitlines():
             line = line.strip()
             if line and not line.startswith("#"):
-                key, _, why = line.partition(" ")
-                out[key] = why.strip()
+                # Site keys are "<file> <10-hex hash>" (as --list-sites prints them), so the key holds one space.
+                m = re.match(r"^(.*? [0-9a-f]{10})(?:\s+(.*))?$", line)
+                if m:
+                    out[m.group(1)] = (m.group(2) or "").strip()
+                else:
+                    key, _, why = line.partition(" ")
+                    out[key] = why.strip()
     return out
 
 

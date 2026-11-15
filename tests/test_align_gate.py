@@ -90,6 +90,22 @@ class SourceTest(unittest.TestCase):
         g.check_sites(src, {key: "p is 4 aligned by the caller"}, hits)
         self.assertEqual(len(hits), 1)
 
+    def test_sites_file_round_trip(self):
+        # A sites file written from --list-sites keys (which hold one space) must be read back as reviewed.
+        src = self.tree({"x.c": "void f(u8*p){ u32 *q = (u32 *)p; }
+"})
+        key = g.site_lines(src)[0][3]
+        self.assertIn(" ", key)
+        sites = src / "sites.txt"
+        sites.write_text(f"# reviewed
+{key} p is 4 aligned by the caller
+", encoding="utf-8")
+        reviewed = g.load_list(str(sites))
+        self.assertEqual(reviewed.get(key), "p is 4 aligned by the caller")
+        hits = []
+        g.check_sites(src, reviewed, hits)
+        self.assertEqual(hits, [])
+
 
 class CliTest(unittest.TestCase):
     def test_exit_codes(self):
