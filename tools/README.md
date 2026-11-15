@@ -42,3 +42,18 @@ Not ported, and why: [NOT-PORTED.md](NOT-PORTED.md).
 
 One line per change: `frame word`, where bit i of the word is entry i of `inputs.route_bits`. Optional
 `last N` line ends the run. Real ports only.
+
+## Clips and video
+
+Game-neutral capture and edit tools. Capture constants live in the config's `capture:` section (see
+`configs/avspu.example.yaml`). Optional packages: Pillow, numpy, imageio-ffmpeg. Each tool stops with a clear message when
+one it needs is missing, and its smoke test skips. Frames, audio and videos are derived from your game: keep them out of
+git. Nothing here uploads anything. Methods: `skills/clip-capture`, `skills/video-assemble`; checklist:
+`playbook/templates/TRAILER.md`.
+
+| Tool | Area | What it does |
+| --- | --- | --- |
+| `clip/shot_script.py` | capture | Route and take language (wait, repeat, tap, hold, press, idle, save/load state, step, need conditions), paused one-frame stepping, per-chunk `take.json`, own emulator copy only, staged assists logged; `--dry-run`, `--disclose` |
+| `clip/align_audio.py` | audio | Cuts a real-time audio recording to a stepped take: vblank clock fit, median event-to-onset latency, alignment error report |
+| `video/assemble.py` | video | JSON edit list to 1080p mp4: 4:3 picture in a 16:9 frame, punch-ins, captions, cards, loop dissolve, named export presets, contact sheet; `--probe`, `--smooth` |
+| `video/mix.py` | audio | Sound track for the edit list: game-sound cuts, ducked music, voice lines, loudness target |

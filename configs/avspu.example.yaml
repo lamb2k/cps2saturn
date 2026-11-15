@@ -95,3 +95,45 @@ saturn:
   ip_load_address: 0x06004000
   ip_read_size: 0
   emulator_mcp_port: 9640
+
+capture:
+  # Clip capture (tools/clip/shot_script.py). Every value marked FILL is a placeholder: fill it from your own
+  # MAME/emulator work (watchpoints, symbol tables), never from this file. The keys are the shape; the numbers are not real.
+  emulator_dir: "${CAPTURE_EMULATOR_DIR}"   # your own copy of the emulator folder; put an empty file named .capture-copy in it
+  emulator_exe: yabasanshiro.exe
+  ini_name: yabause.ini
+  port: 9790                                 # a port of its own, not the one other lanes use
+  pad_mode: window                           # window = key messages to the emulator's own window; mcp = the bridge's pad_set tool
+  nm: "${NM}"                                # optional: your toolchain's nm, so addresses can be written "sym:NAME+0x8"
+  keys:                                      # virtual-key codes bound to the Port 1 pad in YOUR copy's ini (placeholders)
+    up: 0x00
+    down: 0x00
+    left: 0x00
+    right: 0x00
+    start: 0x00
+    a: 0x00
+    b: 0x00
+    c: 0x00
+  # FILL: the game's own vblank counter in work RAM (a word that counts frames). Every wait uses it.
+  # vblank:
+  #   addr: 0x00000000
+  #   bytes: 4
+  # FILL: the bytes that say the player is standing free (idle/walk), and the values that count as idle.
+  # idle:
+  #   addr: 0x00000000
+  #   bytes: 3
+  #   states: ["000000", "000002"]
+  # FILL: the player's health word, for STAGED holds only. Every hold is logged in take.json so captions can say so.
+  # health:
+  #   addr: 0x00000000
+  #   bytes: 2
+  # FILL (optional): a pool of enemy blocks, read only, to pick kill moments; and one player block, to find counters.
+  # enemy_pool:
+  #   base: 0x00000000
+  #   count: 20
+  #   stride: 0x00
+  #   health_offset: 0x00
+  #   health_bytes: 2
+  # player_block:
+  #   base: 0x00000000
+  #   size: 0x00
