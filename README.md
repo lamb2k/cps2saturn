@@ -9,6 +9,11 @@ method only. Work only from material you own or are otherwise authorized to use.
 
 A kit for porting Capcom CPS2 arcade games to native Sega Saturn code, using the 4 MB (32 Mbit) RAM cartridge.
 
+**CPS-1 and CPS-Dash (experimental).** The capture, object, tile and video tools also handle CPS-1 and the QSound
+CPS-1 boards (CPS-Dash), chosen by `game.board` in the config. They are checked against MAME on one CPS-Dash game
+only, and no CPS-1 or CPS-Dash port has used them yet. What works, how it was checked and what is still open:
+[docs/design/cps1-dash-boards.md](docs/design/cps1-dash-boards.md). Start from `configs/cps1.example.yaml`.
+
 - **Playbook:** the phases, gates and staffing, from ROM identity to a release. [playbook/PLAYBOOK.md](playbook/PLAYBOOK.md)
 - **Claude Code skills:** one per area, so an agent can pick up any part of the work. [skills/](skills/)
   See the skills table below.
@@ -59,7 +64,8 @@ Saturn side (VDP1/VDP2, SCSP, CD, cart) is written natively. It is not an emulat
 | `saturn/` | Game-neutral Saturn platform code: boot, loader, hand-off, VDP1 and VDP2, SCSP and CD audio (see `saturn/README.md`) |
 | `tools/` | Game-neutral tools (see `tools/README.md`) |
 | `tools/NOT-PORTED.md` | AvP tools left behind, with reasons |
-| `configs/` | Per-game config; `avspu.example.yaml` is the worked example |
+| `configs/` | Per-game config; `avspu.example.yaml` is the worked example, `cps1.example.yaml` the CPS-1 / CPS-Dash shape |
+| `docs/design/` | Design notes: CPS-1 and CPS-Dash support, with its MAME results |
 | `tests/` | Smoke tests, one per tool, no ROM needed |
 
 ## Requirements

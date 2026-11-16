@@ -68,6 +68,24 @@ class Cps1CaptureTest(unittest.TestCase):
         self.assertEqual(golden_reader.sizes(example()), (0xFF0000, 0x10000, 0x2000))
 
 
+class Cps1ExampleTest(unittest.TestCase):
+    PATH = _util.ROOT / "configs" / "cps1.example.yaml"
+
+    def test_loads_with_and_without_pyyaml(self):
+        text = self.PATH.read_text()
+        for c in (cfg.load(self.PATH), cfg._expand(cfg.parse_mini_yaml(text))):
+            self.assertEqual(boards.name(c), "cpsdash")
+            self.assertEqual(boards.object_table(c), "register")
+            self.assertEqual(len(cfg.get(c, "video.priority")), 4)
+            self.assertEqual(len(cfg.get(c, "video.layer_enable_masks")), 3)
+            self.assertEqual(cfg.get(c, "graphics.mapper.ranges")[0][0], "sprites scroll1 scroll2 scroll3")
+
+    def test_runner_dry_run(self):
+        _, env, _ = run_args(cfg.load(self.PATH))
+        self.assertEqual(env["CPS2SAT_OBJ"], "0x900000,0x800")
+        self.assertEqual(env["CPS2SAT_OBJ_REG"], "0x800100,0x800")
+
+
 class BaselineTest(unittest.TestCase):
     def test_nvram_and_cfg_baselines_are_copied(self):
         with tempfile.TemporaryDirectory() as d:

@@ -2,7 +2,9 @@
 
 Status: DRAFT. Rollout steps 1 (capture), 2 (objects) and 3 (tiles) are built, host-tested and checked in
 MAME 0.289 on `dino` (CPS-Dash), and so is a whole-frame reference with the scroll layers (`tools/cps_video.py`).
-See "Step 1 in MAME", "Steps 2 and 3 in MAME" and "Scroll layers in MAME" below. Steps 4 and 5 are not started.
+See "Step 1 in MAME", "Steps 2 and 3 in MAME" and "Scroll layers in MAME" below. Step 4 (docs) is done. Step 5,
+a real port's phase 0, is not started. CPS-2 behaviour is unchanged except for one deliberate change: the golden
+runner now shuts host input out of MAME ("Step 1 in MAME").
 
 ## 1. Goal
 
@@ -200,17 +202,17 @@ The skill names stay the same. Changes:
 
 Each step is one reviewable change, and none of them touches CPS-2 behaviour.
 
-1. **Capture:** the board key, `tools/boards.py`, the `golden.lua` opcode fallback and object-base tap,
+1. **Capture (done):** the board key, `tools/boards.py`, the `golden.lua` opcode fallback and object-base tap,
    `cfg_baseline`, and program-only code dumps. Tests. This unblocks phase 0 on a CPS-1 or Dash game.
-2. **Objects:** `cps_objects.py` with the CPS-1 format; `cps2_objects.py` as an entry point. Tests.
-3. **Tiles:** the mapper step in `cps_tiles.py`; `cps2_tiles.py` as an entry point. Tests.
-4. **Docs:** the skill and playbook changes, `configs/cps1.example.yaml`, and the README and tools README tables.
+2. **Objects (done):** `cps_objects.py` with the CPS-1 format; `cps2_objects.py` as an entry point. Tests.
+3. **Tiles (done):** the mapper step in `cps_tiles.py`; `cps2_tiles.py` as an entry point. Tests.
+4. **Docs (done):** the skill and playbook changes, `configs/cps1.example.yaml`, and the README and tools README tables.
 5. **Proof:** phase 0 of a first real Dash or CPS-1 port, using the kit unchanged. Anything it finds feeds back
    here before the kit claims support.
 
 ## 8. Open questions
 
-1. **Which game first?** I'd suggest a Dash beat-'em-up (Cadillacs and Dinosaurs or The Punisher). The audio
+1. **Which game first?** The suggestion is a Dash beat-'em-up (Cadillacs and Dinosaurs or The Punisher). The audio
    method carries over from CPS-2 unchanged, and the genre matches AvP, so most of the playbook's lessons apply
    directly. A plain CPS-1 game means proving the FM + ADPCM audio path at the same time as the video changes.
 2. **When to sample the object base.** If a game flips the base between two tables, the host check has to agree
@@ -225,7 +227,7 @@ Each step is one reviewable change, and none of them touches CPS-2 behaviour.
 4. **Where the 68000 writes sound commands in Q RAM** (Dash and CPS-2). MAME only maps the shared RAM. Find it
    per game, as AvP did.
 5. **The CPS-2 flipped-block wrap.** MAME's own comment marks the unflipped wrap as a game-specific fix, so the
-   CPS-2 behaviour may be incomplete emulation. It does not affect CPS-1, but `cps2_objects.py` copies it.
+   CPS-2 behaviour may be incomplete emulation. It does not affect CPS-1, but `cps_objects.py` copies it for CPS-2.
 
 ## Step 1 in MAME
 

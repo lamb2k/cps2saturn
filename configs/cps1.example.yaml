@@ -1,0 +1,67 @@
+# Shape of a CPS-1 or CPS-Dash config. Board-level addresses are filled in. Every value marked FILL is a placeholder
+# to fill from your own MAME work (vector table, watchpoints, the game's CPS-B setup and graphics mapper); the keys
+# are the shape and the numbers are not real. No ROM bytes, tables or game data. Copy to configs/<set>.yaml
+# (configs/*.yaml other than *.example.yaml stay out of git). The full key list is in configs/avspu.example.yaml;
+# this file shows what differs on these boards. Design and MAME results: docs/design/cps1-dash-boards.md.
+
+game:
+  set: FILL
+  description: "FILL"
+  mame_version: "0.289"
+  players: 2
+  # cps1: plain CPS-1 (YM2151 + OKI6295 sound, DIP switches). cpsdash: QSound CPS-1 (CPS-1.5), EEPROM.
+  board: cpsdash
+
+paths:
+  mame_exe: "${MAME_EXE}"
+  rompath: "${CPS2SAT_ROMPATH}"
+  work: "${CPS2SAT_WORK}"
+  # cpsdash keeps settings in EEPROM (MAME nvram/); cps1 in DIP switches (MAME cfg/). Fill the one your board uses.
+  nvram_baseline: "${CPS2SAT_NVRAM_BASELINE}"
+  # cfg_baseline: "${CPS2SAT_CFG_BASELINE}"
+
+cpu:
+  # FILL: the level 2 handler's address (the long at 0x68 in the program dump) and the next byte.
+  irq_tap: [0x0, 0x1]
+  irq_vector_pc: 0x68
+  program_size: 0x200000
+
+ram:
+  work_base: 0xff0000
+  work_size: 0x10000
+  # No object_base / object_size: the table follows the CPS-A object base register (tools/boards.py), 0x800 bytes.
+  io_ranges:
+    - [0x800000, 0x80001f]       # player inputs and DIP switches
+    - [0xf1c000, 0xf1c007]       # cpsdash: extra inputs, coin control, EEPROM. cps1: drop this range
+
+inputs:
+  # FILL: from tools/mame/list_inputs.lua. Entries are [MAME port tag, field name].
+  route_bits:
+    - [":IN0", "Coin 1"]
+    - [":IN0", "1 Player Start"]
+    - [":IN1", "P1 Right"]
+
+video:
+  # FILL from the game's CPS-B setup (in MAME, the game's entry in the CPS-B config table): the layer control
+  # register offset, the four priority register offsets and the three scroll layer enable masks.
+  # Used by tools/cps_video.py and tools/video_check.py. Some sets move the registers: video.cps_a / video.cps_b.
+  layer_control: 0x0
+  priority: [0x0, 0x0, 0x0, 0x0]
+  layer_enable_masks: [0x0, 0x0, 0x0]
+
+graphics:
+  # FILL: the game's graphics ROM mapper (see tools/cps_tiles.py). [layers, first code, last code, bank]; codes are
+  # in the layer's shifted units, as MAME's tables give them.
+  mapper:
+    bank_sizes: [0x0, 0x0, 0x0, 0x0]
+    ranges:
+      - ["sprites scroll1 scroll2 scroll3", 0x0, 0x0, 0]
+
+disc:
+  cdr_sectors: 360000
+  pregap_sectors: 150
+
+saturn:
+  ip_load_address: 0x06004000
+  ip_read_size: 0
+  emulator_mcp_port: 9640

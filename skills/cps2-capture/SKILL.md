@@ -1,6 +1,6 @@
 ---
 name: cps2-capture
-description: MAME-side capture and reference work for CPS2-to-Saturn ports. Use for pinning MAME, golden runs (per-IRQ work RAM and object RAM dumps), saved input routes, CPS2 object lists, palettes, tile decoding, watchpoints and read taps, the program/opcode encryption split, finding the game's debug menus, and treating MAME as the behaviour reference.
+description: MAME-side capture and reference work for CPS2-to-Saturn ports, and for CPS-1 and CPS-Dash ports (experimental). Use for pinning MAME, golden runs (per-IRQ work RAM and object RAM dumps), saved input routes, CPS2 object lists, palettes, tile decoding, watchpoints and read taps, the program/opcode encryption split, finding the game's debug menus, and treating MAME as the behaviour reference.
 ---
 
 # CPS2 capture: MAME as the reference

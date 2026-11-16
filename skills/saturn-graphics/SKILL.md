@@ -1,6 +1,6 @@
 ---
 name: saturn-graphics
-description: Saturn graphics for CPS2 ports. Use for converting CPS2 sprites to VDP1 and scroll layers to VDP2, the 4bpp 16x16 tile baseline, palettes to CRAM, 384-to-352 crop and scaling, HUD placement, translucency and colour calculation, VDP1 command budgets, the slave SH-2 draw split, and planning cart pages and per-stage round files with drop ranking when tiles do not fit.
+description: Saturn graphics for CPS2 ports (and, experimentally, CPS-1 and CPS-Dash ports). Use for converting CPS sprites to VDP1 and scroll layers to VDP2, the 4bpp 16x16 tile baseline, palettes to CRAM, 384-to-352 crop and scaling, HUD placement, translucency and colour calculation, VDP1 command budgets, the slave SH-2 draw split, and planning cart pages and per-stage round files with drop ranking when tiles do not fit.
 ---
 
 # Saturn graphics for CPS2 ports
@@ -10,6 +10,10 @@ description: Saturn graphics for CPS2 ports. Use for converting CPS2 sprites to 
 - **Sprites to VDP1.** One VDP1 command per visible 16x16 tile, 4bpp with a colour bank. Cull off-screen and
   fully transparent tiles before emitting. Keep tile order, flip and priority from the object list.
 - **Scroll layers to VDP2.** CPS2 scroll 1 (8x8 text), scroll 2 (16x16) and scroll 3 (32x32) map to NBG layers.
+- **CPS-1 and CPS-Dash order and priority.** Sprites have no priority of their own: the CPS-B layer control puts
+  sprites and each scroll layer in one of four slots, and the priority registers let chosen pens of the layer just
+  below the sprites cover them. `tools/cps_video.py` is the reference for both (checked against MAME with
+  `tools/video_check.py`); the Saturn priorities have to reproduce it. Codes go through the game's ROM mapper.
   Row scroll where the game uses it.
 - **Palettes to CRAM.** Convert CPS2 colour words at load or on change, per bank. Count live banks per frame; refuse
   cleanly when over capacity rather than drawing wrong colours.
