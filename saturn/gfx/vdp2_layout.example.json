@@ -1,0 +1,10 @@
+{
+  "comment": "Spec for tools/vdp2_cycle_check.py: the layer set the two patterns in sat_vdp2_cycles.h serve. cycles are filled in by the test from the header.",
+  "ramctl": "0x1300",
+  "layers": {
+    "nbg0": {"colours": 16, "reduction": 2},
+    "nbg1": {"colours": 16, "reduction": 2},
+    "nbg2": {"colours": 16, "reduction": 1},
+    "nbg3": {"colours": 16, "reduction": 1}
+  }
+}
