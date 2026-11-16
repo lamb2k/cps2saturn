@@ -7,6 +7,9 @@
 --   CPS2SAT_IRQ_TAP      "first,last" opcode addresses of the IRQ entry fetch
 --   CPS2SAT_IRQ_VECTOR   PC value that marks a real IRQ entry (not a prefetch)
 --   CPS2SAT_WORK         "base,size" of work RAM;  CPS2SAT_OBJ  "base,size" of object RAM
+--   CPS2SAT_OBJ_REG      "register,align" (CPS-1, CPS-Dash): the object table moves with this CPS-A register. The
+--                        dump follows it from the first write (base = GFX RAM + (value * 256, aligned) & 0x3ffff,
+--                        as MAME computes it) and CPS2SAT_OUT.obj.txt gets "irq base" per change
 --   CPS2SAT_IO           "lo-hi;lo-hi" I/O ranges to log
 --   CPS2SAT_MAXIRQ       records to write (default 6000)
 --   CPS2SAT_DELTA=1      write only changed 32-bit words per record
@@ -24,7 +27,8 @@ local function need(name) local v = os.getenv(name); assert(v and v ~= "", name 
 
 local cpu = manager.machine.devices[":maincpu"]
 local prog = cpu.spaces["program"]
-local ops = cpu.spaces["opcodes"]
+-- CPS-2 fetches opcodes through a decrypted view. CPS-1 and CPS-Dash have no such space: fetches use the program space.
+local ops = cpu.spaces["opcodes"] or prog
 local path = need("CPS2SAT_OUT")
 local tap_lo, tap_hi = pair(need("CPS2SAT_IRQ_TAP"))
 local vector = num(need("CPS2SAT_IRQ_VECTOR"))
@@ -80,6 +84,22 @@ cps2sat_tap_irq = ops:install_read_tap(tap_lo, tap_hi, "cps2sat_golden", functio
     irq = irq + 1
     iolog:write("V\n")
 end)
+
+local obj_reg = os.getenv("CPS2SAT_OBJ_REG")
+if obj_reg and obj_reg ~= "" then
+    local reg, align = pair(obj_reg)
+    local gfx_ram, value = obj_base, 0
+    local objlog = assert(io.open(path .. ".obj.txt", "w"))
+    cps2sat_obj_reg = prog:install_write_tap(reg, reg + 1, "cps2sat_objreg", function(off, data, mask)
+        value = (value & ~mask | data & mask) & 0xffff
+        local base = gfx_ram + ((value * 256) & ~(align - 1) & 0x3ffff)
+        if base ~= obj_base then
+            obj_base = base
+            objlog:write(string.format("%d %x\n", irq, base))
+            objlog:flush()
+        end
+    end)
+end
 
 cps2sat_io_taps = {}
 for lo, hi in (os.getenv("CPS2SAT_IO") or ""):gmatch("(%w+)%-(%w+)") do

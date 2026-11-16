@@ -5,6 +5,8 @@
 game:
   set: avspu
   description: "Alien vs. Predator (USA 940520)"
+  # cps2 (the default when missing) | cps1 | cpsdash. tools/boards.py says what each one changes.
+  board: cps2
   mame_version: "0.289"
   players: 3
 
@@ -14,6 +16,8 @@ paths:
   rompath: "${CPS2SAT_ROMPATH}"
   work: "${CPS2SAT_WORK}"
   nvram_baseline: "${CPS2SAT_NVRAM_BASELINE}"
+  # CPS-1 keeps its settings in DIP switches, which MAME saves in cfg/. A folder copied into each run's cfg/.
+  # cfg_baseline: "${CPS2SAT_CFG_BASELINE}"
 
 cpu:
   # Level 2 IRQ entry fetch: golden.lua taps it and checks PC still reads as the vector.
@@ -24,6 +28,8 @@ cpu:
 ram:
   work_base: 0xff0000
   work_size: 0x10000
+  # CPS-2: a fixed table. CPS-1 and CPS-Dash leave both out: the table follows the CPS-A object base register
+  # (object_table: register, 0x800 bytes; video.cps_a overrides the register address for sets that move it).
   object_base: 0x708000
   object_size: 0x2000
   # I/O ranges whose reads the golden logs for host replay (inputs, EEPROM, sound status).

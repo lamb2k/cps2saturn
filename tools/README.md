@@ -8,11 +8,12 @@ Run the smoke tests with `python -m unittest discover -s tests -v`. They use syn
 | Tool | Area | What it does |
 | --- | --- | --- |
 | `cfg.py` | all | Loads the per-game config (PyYAML or a built-in reader), expands `${ENV}` values |
+| `boards.py` | all | Board facts from `game.board` (`cps2` default, `cps1`, `cpsdash`): opcode view, where the object table lives, its size; config values override |
 | `hygiene_scan.py` | repo | Pre-push scan: blocked file types, size, binary content, private paths, tokens, keys |
-| `mame/golden.lua` | capture | Golden run: per-IRQ registers + work RAM + object RAM (full or delta), I/O log, route playback, state saves |
-| `mame_golden_run.py` | capture | Runs MAME with `golden.lua` from the config; `--dry-run` prints the command |
+| `mame/golden.lua` | capture | Golden run: per-IRQ registers + work RAM + object RAM (full or delta), I/O log, route playback, state saves. On CPS-1 and CPS-Dash it taps the program space (no opcode view) and follows the object base register |
+| `mame_golden_run.py` | capture | Runs MAME with `golden.lua` from the config; seeds `nvram/` and `cfg/` from baselines; `--dry-run` prints the command |
 | `golden_reader.py` | capture, host check | Reads full or delta goldens; shows changed words; finds the first difference between two |
-| `mame/dump_code_spaces.lua` | capture | Dumps the program and decrypted opcode views over a range |
+| `mame/dump_code_spaces.lua` | capture | Dumps the program and decrypted opcode views over a range (program only on CPS-1 and CPS-Dash) |
 | `mame/dump_rom_window.lua` | capture | Dumps one program-space window (script tables) |
 | `mame/list_inputs.lua` | capture | Prints every input port and field, for the config's route bits |
 | `dis68k.py` | game logic | Bounded 68000 disassembly, vectors and cross references (capstone) |
@@ -56,9 +57,11 @@ inputs from files, never from a game header.
 
 ## Environment values the MAME scripts read
 
-`golden.lua`: `CPS2SAT_OUT`, `CPS2SAT_IRQ_TAP`, `CPS2SAT_IRQ_VECTOR`, `CPS2SAT_WORK`, `CPS2SAT_OBJ`, `CPS2SAT_IO`,
-`CPS2SAT_MAXIRQ`, `CPS2SAT_DELTA`, `CPS2SAT_ROUTE`, `CPS2SAT_ROUTE_BITS`, `CPS2SAT_LAST`, `CPS2SAT_SAVE`.
-`mame_golden_run.py` sets all of them from the config.
+`golden.lua`: `CPS2SAT_OUT`, `CPS2SAT_IRQ_TAP`, `CPS2SAT_IRQ_VECTOR`, `CPS2SAT_WORK`, `CPS2SAT_OBJ`, `CPS2SAT_OBJ_REG`,
+`CPS2SAT_IO`, `CPS2SAT_MAXIRQ`, `CPS2SAT_DELTA`, `CPS2SAT_ROUTE`, `CPS2SAT_ROUTE_BITS`, `CPS2SAT_LAST`, `CPS2SAT_SAVE`.
+`mame_golden_run.py` sets all of them from the config. `CPS2SAT_OBJ_REG` is set only when the object table follows
+a register (CPS-1, CPS-Dash); the run then also writes `golden.bin.obj.txt`, one `irq base` line (hex base) each
+time the table moves, giving the first record that uses the new base.
 
 `dump_code_spaces.lua`: `CPS2SAT_FIRST`, `CPS2SAT_LAST`, `CPS2SAT_OUT_PROGRAM`, `CPS2SAT_OUT_OPCODES`.
 `dump_rom_window.lua`: `CPS2SAT_FIRST`, `CPS2SAT_LAST`, `CPS2SAT_SPACE`, `CPS2SAT_OUT`.
