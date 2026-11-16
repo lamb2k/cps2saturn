@@ -75,3 +75,7 @@ counted. Don't adopt a graphics micro-optimisation without a measured whole-fram
   being the extra one in that slot.
 - **Fresh profile per run.** A saved setting in the emulator's backup RAM silently turned a feature on in a
   "default" run.
+
+## Code in the kit
+
+`saturn/rt/sat_sync` is the master and slave hand-off, `saturn/gfx/sat_layer` skips unchanged layers, and `tools/fn_heat.py` with `tools/place_plan.py` place hot functions in the fast RAM from a measured heat file. Timing claims still need a console measurement; the host tests do not give one.

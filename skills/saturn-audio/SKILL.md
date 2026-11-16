@@ -70,3 +70,7 @@ Both must work after pause, quit to title and a new game.
 - A non-silent capture with matching clips is not a listening test. Say "no person has listened" until one has.
 - Runs with sound off are "audio unchecked", not "audio missing". Write which it was.
 - Rapid retriggers must not leak voices; test a burst of the same effect.
+
+## Code in the kit
+
+`saturn/audio/` has the SCSP driver core (`sat_scsp`: parked 68000, clip play, pan and rate words) and the CD audio control (`sat_cdda`: queued CD block commands, intro then loop, fades). The game's own sound command path and clip table stay yours.

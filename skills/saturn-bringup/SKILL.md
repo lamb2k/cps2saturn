@@ -76,3 +76,7 @@ Inset flush HUD rows by one cell per side, and confirm on the console.
   (closed, reduced, console-only), and correct overstatements in the note itself when results come back.
 - If several fixes landed in one disc, say the cause can't be separated.
 - Label owner photos CONSOLE and every other number EMULATED, MODELLED or ASSUMED.
+
+## Code in the kit
+
+`saturn/boot/sat_diag` is the boot display that shows where a console stopped (bands per step, a code in the stripes, a red or magenta flash on failure). Use it from the first instruction of the loader.

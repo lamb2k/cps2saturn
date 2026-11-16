@@ -98,3 +98,7 @@ Budgets are separate: work RAM high (1 MB) and low (1 MB), VDP1 VRAM (512 KB), V
   files against their sources before touching the renderer (see `saturn-packaging`).
 - Missing tiles draw blank. Keep a missing-key counter in the runtime and report it with every run.
 - A garbled frame may be the game's own effect. Compare a MAME still of the same moment before fixing.
+
+## Code in the kit
+
+`saturn/gfx/` has the reusable drawing pieces: the tile slot cache (`sat_tilecache`), the VDP1 plot and frame change protocol (`sat_vdp1`), the VDP2 register latch and layout writer (`sat_vdp2`), the cycle patterns that pass `tools/vdp2_cycle_check.py` (`sat_vdp2_cycles.h`) and the unchanged-layer memo (`sat_layer`). `saturn/README.md` says what a game supplies.

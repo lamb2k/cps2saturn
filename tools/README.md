@@ -29,6 +29,17 @@ Run the smoke tests with `python -m unittest discover -s tests -v`. They use syn
 
 Not ported, and why: [NOT-PORTED.md](NOT-PORTED.md).
 
+## Platform tree tools
+
+Tools that go with `saturn/` (see `saturn/README.md`).
+
+| Tool | Area | What it does |
+| --- | --- | --- |
+| `fn_heat.py` | SH-2 timing | Per function heat from a profiling emulator's dumps and a link map; keys are `object:symbol` and survive a relink |
+| `place_plan.py` | SH-2 timing | Hot code placement: which functions go in the fast RAM within a byte budget, where the cold ones go, as linker include lists |
+| `opx_store.py` | game logic | Builds and reads the opcode range store `saturn/rt/sat_opx.c` looks up |
+| `saturn_build_check.py` | SH-2 build | Compiles every `saturn/` module with your SH-2 compiler, warnings as errors; says SKIP without one |
+
 ## Hardware gates
 
 Checks for what emulators forgive and a console does not. Each exits 0 pass, 1 fail, 2 bad input, and takes its

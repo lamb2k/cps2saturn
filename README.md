@@ -56,6 +56,7 @@ Saturn side (VDP1/VDP2, SCSP, CD, cart) is written natively. It is not an emulat
 | `skills/` | Claude Code skills, one folder each with a `SKILL.md` |
 | `playbook/PLAYBOOK.md` | The long-form workflow, gates and lessons |
 | `playbook/templates/` | Lane brief, hand-back, STATUS.md, release notes |
+| `saturn/` | Game-neutral Saturn platform code: boot, loader, hand-off, VDP1 and VDP2, SCSP and CD audio (see `saturn/README.md`) |
 | `tools/` | Game-neutral tools (see `tools/README.md`) |
 | `tools/NOT-PORTED.md` | AvP tools left behind, with reasons |
 | `configs/` | Per-game config; `avspu.example.yaml` is the worked example |

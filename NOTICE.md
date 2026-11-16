@@ -28,6 +28,7 @@ legal review. This kit gives you no rights in any game.
 
 | Files | Licence | Why |
 | --- | --- | --- |
+| `saturn/**` | MIT ([LICENSE](LICENSE)) | Moved from AvP Saturn (`avpsaturn` v0.1.0-beta) with the owner's approval; each file header names its source. No code from GPL projects. `saturn/cd/sat_lzdec.h` follows the method of `puff.c` (zlib licence), credited below. |
 | `tools/**/*.py`, `tools/**/*.lua`, `tests/**` | MIT ([LICENSE](LICENSE)) | Written for the AvP Saturn project and generalised here. No code copied from MAME, Yabasanshiro or any other GPL project. |
 | `skills/**`, `playbook/**`, `configs/**`, top-level docs | MIT ([LICENSE](LICENSE)) | Our own writing. |
 
@@ -66,3 +67,8 @@ The owner chose the options that avoid conflict:
 - **Tool code from AvP Saturn:** the owner wrote it, so it is MIT here. AvP Saturn itself gets no open-source licence, because it holds code and data derived from the game. Only its original tooling is open, and that tooling lives here.
 - **Method notes:** they are methods only, written in our own words, with no code copied, so other projects' licences do not apply to them.
 - **Going public:** this repo stays private until AvP Saturn's release, and goes public with it.
+
+## Other credits
+
+- `saturn/cd/sat_lzdec.h` follows the canonical symbol decode of `puff.c` by Mark Adler (zlib licence, permissive). It is credited here and in the file header.
+- The `saturn/` platform code was written for the AvP Saturn port by the repository owner and moved here under the MIT licence. It needs Sega's SGL headers and libraries only for `saturn/cd/sat_gfs_io.c`; those are not included.

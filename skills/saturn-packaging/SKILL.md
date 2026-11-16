@@ -84,3 +84,7 @@ A browser Saturn emulator (a libretro Yabause build in WebAssembly) can run the 
 
 The package, ISO, cue, tracks, stills of game screens and the program image. Commit the build scripts, the
 hardware test sheet template and the hash manifest only if it holds no game data.
+
+## Code in the kit
+
+`saturn/boot/`, `saturn/cd/` and `saturn/ld/` have the loader side: boot display, clock change, 4 MB cart bring-up, GFS file loads, the sector store reader that matches `tools/sector_store.py`, an in-place deflate decoder and the link script templates.

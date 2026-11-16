@@ -25,12 +25,35 @@ Methods from many of them are written up in the skills and the playbook instead.
 | tools/sector_store.py (commit fb69ab5, AvP default line) | `tools/sector_store.py` |
 | saturn/rt/build.py round_files(): shared-page and ranked-drop rules | `tools/page_plan.py` |
 
+## Moved into the platform tree
+
+The game-neutral parts of the AvP Saturn runtime went into `saturn/` on 2026-11-16 (see `saturn/README.md`). Entries below for those files now say which part moved.
+
+| AvP file (v0.1.0-beta) | Here |
+| --- | --- |
+| `saturn/rt/boot.c` boot display | `saturn/boot/sat_diag.c` |
+| `saturn/rt/boot.c` clock change, cart bring-up, entry | `saturn/boot/sat_boot.c`, `sat_boot_main.c`, `crt0.S` |
+| `saturn/rt/boot.c` GFS loads, `SECTOR_STORE` reader | `saturn/cd/sat_gfs_io.c`, `sat_store.c` |
+| `saturn/rt/lzdec.h` | `saturn/cd/sat_lzdec.h` |
+| `saturn/rt/boot.ld`, `build.py` link script | `saturn/ld/boot.ld.in`, `rt.ld.in` |
+| `saturn/rt/ctx.s` | `saturn/rt/sat_ctx.S` |
+| `saturn/rt/kernel.c` slave start and hand-off | `saturn/rt/sat_sync.c` |
+| `saturn/rt/pad.c` | `saturn/rt/sat_pad.c` |
+| `saturn/rt/lift_target.h` OP8/OP16/OP32 | `saturn/rt/sat_opx.c` |
+| `saturn/gfx/sat_gfx.c` cache | `saturn/gfx/sat_tilecache.c` |
+| `saturn/gfx/sat_gfx.c` VDP1 plot protocol | `saturn/gfx/sat_vdp1.c` |
+| `saturn/gfx/sat_gfx.c` VDP2 latch and init | `saturn/gfx/sat_vdp2.c`, `sat_vdp2_cycles.h` |
+| `saturn/gfx/sat_gfx.c` snap_layer | `saturn/gfx/sat_layer.c` |
+| `saturn/audio/sat_audio.c` | `saturn/audio/sat_scsp.c`, `sat_cdda.c` |
+| `tools/perf/fn_heat.py` | `tools/fn_heat.py` |
+| `saturn/rt/build.py` plan_functions | `tools/place_plan.py` |
+
 ## Not ported
 
 - `saturn/audio/build_pack.py`: AvP audio build or standalone test, bound to its clip set.
 - `saturn/audio/render_mame.lua`: AvP audio build or standalone test, bound to its clip set.
-- `saturn/audio/sat_audio.c`: AvP audio build or standalone test, bound to its clip set.
-- `saturn/audio/sat_audio.h`: AvP audio build or standalone test, bound to its clip set.
+- `saturn/audio/sat_audio.c`: Generic core (SCSP slot play, SMPC sound start, CD audio chain, fades) moved to `saturn/audio/sat_scsp.c` and `sat_cdda.c`; the Z80 mailbox policy and pan sweeps stay in AvP.
+- `saturn/audio/sat_audio.h`: Interface of the AvP driver; the generic interfaces are `saturn/audio/sat_scsp.h` and `sat_cdda.h`.
 - `saturn/audio/sound_table.py`: Reads the AvP Z80 driver table at fixed offsets; method in skills/saturn-audio.
 - `saturn/audio/standalone.ld`: AvP audio build or standalone test, bound to its clip set.
 - `saturn/audio/standalone.py`: AvP audio build or standalone test, bound to its clip set.
@@ -41,23 +64,23 @@ Methods from many of them are written up in the skills and the playbook instead.
 - `saturn/game/game_hot.h`: AvP lifted-game bindings and overrides.
 - `saturn/game/overrides.txt`: AvP lifted-game bindings and overrides.
 - `saturn/gfx/host_test.c`: AvP Saturn graphics adapter, bound to its pack layout and VDP setup.
-- `saturn/gfx/sat_gfx.c`: AvP Saturn graphics adapter, bound to its pack layout and VDP setup.
-- `saturn/gfx/sat_gfx.h`: AvP Saturn graphics adapter, bound to its pack layout and VDP setup.
+- `saturn/gfx/sat_gfx.c`: Generic parts (tile cache, VDP1 plot protocol, VDP2 latch and layout, layer memo) moved to `saturn/gfx/`; the pack format, layer drawing, HUD and home menu stay in AvP.
+- `saturn/gfx/sat_gfx.h`: AvP's configuration of the drawing library; the generic headers are in `saturn/gfx/`.
 - `saturn/gfx/standalone.ld`: AvP Saturn graphics adapter, bound to its pack layout and VDP setup.
 - `saturn/gfx/standalone_main.c`: AvP Saturn graphics adapter, bound to its pack layout and VDP setup.
 - `saturn/package/HARDWARE_TEST.md`: AvP hardware test sheet or round list.
 - `saturn/package/HARDWARE_TEST_ROUNDS.txt`: AvP hardware test sheet or round list.
-- `saturn/rt/boot.c`: AvP Saturn runtime (kernel, boot, home and duel code) or its build.
-- `saturn/rt/boot.ld`: AvP Saturn runtime (kernel, boot, home and duel code) or its build.
+- `saturn/rt/boot.c`: Boot display, clock change, cart bring-up, GFS loads and the sector store reader moved to `saturn/boot/` and `saturn/cd/`; the AvP save record, reveal and cycle diagnostic stay.
+- `saturn/rt/boot.ld`: Template form in `saturn/ld/boot.ld.in`.
 - `saturn/rt/build.py`: AvP Saturn runtime (kernel, boot, home and duel code) or its build.
-- `saturn/rt/ctx.s`: AvP Saturn runtime (kernel, boot, home and duel code) or its build.
+- `saturn/rt/ctx.s`: Moved to `saturn/rt/sat_ctx.S` (stack tops from C variables, optional r14).
 - `saturn/rt/duel.inc`: AvP Saturn runtime (kernel, boot, home and duel code) or its build.
 - `saturn/rt/duel_smash.inc`: AvP Saturn runtime (kernel, boot, home and duel code) or its build.
 - `saturn/rt/home.c`: AvP Saturn runtime (kernel, boot, home and duel code) or its build.
 - `saturn/rt/home_cold.c`: AvP Saturn runtime (kernel, boot, home and duel code) or its build.
-- `saturn/rt/kernel.c`: AvP Saturn runtime (kernel, boot, home and duel code) or its build.
+- `saturn/rt/kernel.c`: The slave start, hand-off and vblank prologue moved to `saturn/rt/sat_sync.c`; the lifted-game scheduler and traps stay in AvP.
 - `saturn/rt/lift_target.h`: AvP Saturn runtime (kernel, boot, home and duel code) or its build.
-- `saturn/rt/pad.c`: AvP Saturn runtime (kernel, boot, home and duel code) or its build.
+- `saturn/rt/pad.c`: The SMPC sequence moved to `saturn/rt/sat_pad.c`; the AvP input latch mapping and test scripts stay.
 - `saturn/rt/play_duel_hits.py`: AvP bot or run script: reads AvP RAM fields and symbols. Pattern kept in tools/yaba_mcp.py.
 - `saturn/rt/play_full_bot.py`: AvP bot or run script: reads AvP RAM fields and symbols. Pattern kept in tools/yaba_mcp.py.
 - `saturn/rt/play_game_bot.py`: AvP bot or run script: reads AvP RAM fields and symbols. Pattern kept in tools/yaba_mcp.py.
