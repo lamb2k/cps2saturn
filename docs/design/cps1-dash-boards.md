@@ -1,7 +1,8 @@
 # Design: CPS-1 and CPS-Dash boards in the kit
 
-Status: DRAFT. Rollout step 1 (capture) is built, host-tested and run in MAME 0.289 on `dino` (CPS-Dash),
-see "Step 1 in MAME" below. Steps 2 to 5 are not started.
+Status: DRAFT. Rollout steps 1 (capture), 2 (objects) and 3 (tiles) are built, host-tested and checked in
+MAME 0.289 on `dino` (CPS-Dash); see "Step 1 in MAME" and "Steps 2 and 3 in MAME" below. Steps 4 and 5 are not
+started.
 
 ## 1. Goal
 
@@ -250,3 +251,43 @@ That run found one kit bug, which affects every board. The runner did not shut h
 on the Mac reached the game (one run read 0xffef at 0x800000, P1 button 1, where another read 0xffff), so two
 runs of the same route differed. `mame_golden_run.py` now passes `-keyboardprovider none -mouseprovider none
 -joystickprovider none -lightgunprovider none`. This changes the CPS-2 command line too, on purpose.
+
+## Steps 2 and 3 in MAME
+
+`tools/sprite_check.py` is the acceptance check for steps 2 and 3. MAME draws the sprite layer on its own: the
+scroll layers are switched off by clearing their enable bits (0x16 on dino) in every write the game makes to the
+CPS-B layer control register. The kit then draws the same frame itself:
+- the object table comes from the golden's record (step 1's capture);
+- the decode is `cps_objects.py`'s CPS-1 format, with the game's `graphics.mapper` applied to the base code;
+- tiles come from MAME's graphics region, drawn with the first entry on top.
+
+The two pictures are compared pixel for pixel. Colours come from MAME's palette, so the check covers geometry,
+tiles, ordering and the captured table, not palette conversion.
+
+Same set, same stand-ins and same audit caveat as step 1. The run was the attract gameplay demo: 102 frames between
+frames 3600 and 4590, including 12 consecutive ones.
+
+| Check | Result |
+| --- | --- |
+| Record offset (`--search`) | Offset 1 matches all 102 frames with 0 differing pixels. Offsets 0, 2 and 3 fail 98 or 99 of the 102. Offset 1 is MAME's one-frame sprite delay |
+| Gate at offset 1 | 102 of 102 frames, 0 pixels differ |
+| What the frames hold | 11854 on-screen tiles, 2601 multi-tile blocks, 6416 x-flipped and 62 y-flipped tiles, 14 palette banks |
+| Flips ignored (deliberate break) | 0 of 102 pass |
+| Picture origin 1 px off (deliberate break) | 0 of 102 pass |
+| Wrong palette bank (deliberate break) | 0 of 102 pass |
+| Last entry drawn on top (deliberate break) | 0 of 102 pass |
+| No 16-code row wrap (deliberate break) | 102 of 102 still pass: no block in these frames crosses a 16-code row |
+
+Not proven in MAME yet:
+- **The row wrap**, which none of these frames exercise. It is covered only by `tests/test_cps_objects.py`.
+- **A mapper that actually maps.** dino's mapper is the identity, so the mapper is covered only by unit tests.
+- **Scroll-layer tiles** (scroll1 to scroll3 through the mapper), which this check does not draw.
+- **Plain CPS-1.**
+
+A plain CPS-1 game with a non-identity mapper (for example `ffight` or `captcomm`) and some frames with wrapping
+blocks would close the first two gaps.
+
+Known edge, by design: `cps_tiles.py` maps each key on its own, while the sprite hardware maps a block's base code
+and then steps through the row (`cps_objects.py` does the same as the hardware). A block that crosses a mapper
+range edge can therefore differ between the two. The Saturn side should map the base code first, as the hardware
+does.

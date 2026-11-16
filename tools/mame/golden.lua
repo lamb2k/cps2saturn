@@ -85,6 +85,9 @@ cps2sat_tap_irq = ops:install_read_tap(tap_lo, tap_hi, "cps2sat_golden", functio
     iolog:write("V\n")
 end)
 
+-- IRQs seen so far (the next record's number), for scripts that run this one first (mame/sprite_frames.lua).
+function cps2sat_golden_irq() return irq end
+
 local obj_reg = os.getenv("CPS2SAT_OBJ_REG")
 if obj_reg and obj_reg ~= "" then
     local reg, align = pair(obj_reg)

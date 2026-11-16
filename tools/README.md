@@ -17,8 +17,9 @@ Run the smoke tests with `python -m unittest discover -s tests -v`. They use syn
 | `mame/dump_rom_window.lua` | capture | Dumps one program-space window (script tables) |
 | `mame/list_inputs.lua` | capture | Prints every input port and field, for the config's route bits |
 | `dis68k.py` | game logic | Bounded 68000 disassembly, vectors and cross references (capstone) |
-| `cps2_objects.py` | graphics | Decodes CPS2 object lists; tile funnel stats per frame over a golden |
-| `cps2_tiles.py` | graphics | CPS2 4bpp planar tiles to Saturn 4bpp, deduped, SGP1 pack |
+| `cps_objects.py` | graphics | Decodes CPS-2 and CPS-1 / CPS-Dash object lists (format from the board); tile funnel stats per frame over a golden. `cps2_objects.py` is the old name |
+| `cps_tiles.py` | graphics | CPS 4bpp planar tiles to Saturn 4bpp, deduped, SGP1 pack; the game's graphics ROM mapper for CPS-1 / CPS-Dash (`graphics.mapper`). `cps2_tiles.py` is the old name |
+| `sprite_check.py`, `mame/sprite_frames.lua` | graphics, capture | CPS-1 / CPS-Dash sprite layer drawn by the kit from a golden, compared pixel for pixel with MAME drawing sprites only (scroll layers masked off in the CPS-B layer control); `--search` finds the record offset |
 | `page_plan.py` | graphics, memory | Shared pages, keep and restore sets, ranked tile drops per stage file |
 | `sector_store.py` | packaging | One shared store of unique 2 KB sectors for all round files, verified byte for byte |
 | `disc_budget.py` | packaging | Data + CDDA + pregap sectors against an 80- or 74-minute CD-R |
@@ -62,6 +63,9 @@ inputs from files, never from a game header.
 `mame_golden_run.py` sets all of them from the config. `CPS2SAT_OBJ_REG` is set only when the object table follows
 a register (CPS-1, CPS-Dash); the run then also writes `golden.bin.obj.txt`, one `irq base` line (hex base) each
 time the table moves, giving the first record that uses the new base.
+
+`sprite_frames.lua` (runs `golden.lua` first): `CPS2SAT_GOLDEN_LUA`, `CPS2SAT_LAYER_CTRL`, `CPS2SAT_FRAMES`,
+`CPS2SAT_FRAMES_DIR`, `CPS2SAT_GFX_OUT`, `CPS2SAT_GFX_REGION`. `sprite_check.py capture` sets them.
 
 `dump_code_spaces.lua`: `CPS2SAT_FIRST`, `CPS2SAT_LAST`, `CPS2SAT_OUT_PROGRAM`, `CPS2SAT_OUT_OPCODES`.
 `dump_rom_window.lua`: `CPS2SAT_FIRST`, `CPS2SAT_LAST`, `CPS2SAT_SPACE`, `CPS2SAT_OUT`.

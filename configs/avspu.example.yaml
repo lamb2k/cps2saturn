@@ -70,7 +70,9 @@ state:
   rank: 0xff81eb
 
 graphics:
-  # Offsets inside the combined graphics region as cps2_tiles.py reads it.
+  # Offsets inside the combined graphics region as cps_tiles.py reads it. CPS-1 and CPS-Dash: both 0 (the board
+  # default), plus the game's ROM mapper as graphics.mapper (see tools/cps_tiles.py) and, for tools/sprite_check.py,
+  # video.layer_control and video.layer_enable_mask from the game's CPS-B setup.
   sprite_base: 0x000000
   scroll_base: 0x800000
   objects:

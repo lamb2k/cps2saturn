@@ -23,14 +23,17 @@ _CPS1_VIDEO = dict(
     opcode_space=False,     # MAME gives the 68000 no decrypted opcode view
     object_table="register",  # in GFX RAM, at CPS-A register 0x00 x 256
     cps_a=0x800100,
+    cps_b=0x800140,         # some sf2 revisions move it: override with video.cps_b
     gfx_ram=0x900000,
     object_align=0x800,
     object_size=0x800,
+    gfx_sprite_base=0,      # offsets in MAME's graphics region: every layer starts at 0 and goes through the mapper
+    gfx_scroll_base=0,
 )
 
 BOARDS = {
-    "cps2": dict(opcode_space=True, object_table="fixed", cps_a=0x804100, gfx_ram=0x900000, object_align=0x800,
-                 object_size=0x2000),
+    "cps2": dict(opcode_space=True, object_table="fixed", cps_a=0x804100, cps_b=0x804140, gfx_ram=0x900000,
+                 object_align=0x800, object_size=0x2000, gfx_sprite_base=0, gfx_scroll_base=0x800000),
     "cps1": dict(_CPS1_VIDEO),
     "cpsdash": dict(_CPS1_VIDEO),
 }
@@ -49,6 +52,10 @@ def value(c: dict, key: str):
 
 def cps_a(c: dict) -> int:
     return cfg.get(c, "video.cps_a") or value(c, "cps_a")
+
+
+def cps_b(c: dict) -> int:
+    return cfg.get(c, "video.cps_b") or value(c, "cps_b")
 
 
 def object_table(c: dict) -> str:

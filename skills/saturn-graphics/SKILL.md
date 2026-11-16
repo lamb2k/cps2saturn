@@ -14,9 +14,9 @@ description: Saturn graphics for CPS2 ports. Use for converting CPS2 sprites to 
 - **Palettes to CRAM.** Convert CPS2 colour words at load or on change, per bank. Count live banks per frame; refuse
   cleanly when over capacity rather than drawing wrong colours.
 - **Tile pens:** CPS2 pen 15 is transparent. Remap so Saturn pen 0 is transparent (`p -> p + 1`, 15 -> 0).
-  `tools/cps2_tiles.py` does this and dedupes identical payloads.
+  `tools/cps_tiles.py` does this and dedupes identical payloads.
 
-Measure before choosing more complex schemes (row merging, cel composition). `tools/cps2_objects.py funnel` gives
+Measure before choosing more complex schemes (row merging, cel composition). `tools/cps_objects.py funnel` gives
 commands per frame, off-screen and empty tiles, row runs and live banks over a golden. Plan for the worst frame,
 not the mean.
 
