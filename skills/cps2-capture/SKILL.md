@@ -49,10 +49,12 @@ presses as a route. Replays of that route are deterministic.
 - Decode with `tools/cps_objects.py`: unwrap coordinates, keep tile order, flip, priority and palette bank.
 - Graphics ROM tiles are 4bpp planar. `tools/cps_tiles.py` converts to Saturn 4bpp packed pens and dedupes.
 - CPS-1 and CPS-Dash: the object table moves (golden.lua follows it), codes go through the game's ROM mapper
-  (`graphics.mapper`), and the first entry is drawn on top. Prove the decode with `tools/sprite_check.py`: MAME
-  draws sprites only and the kit's drawing of the same frame must match pixel for pixel. Find the record offset
-  once with `--search` (dino: 1, MAME's one-frame sprite delay), then gate with it, and pick frames where sprites
-  move: a still title screen passes at any offset.
+  (`graphics.mapper`), and the first entry is drawn on top. Scroll maps, layer order and the priority masks that
+  let scroll pens cover sprites are in `tools/cps_video.py`. Prove all of it with `tools/video_check.py`: the
+  kit's drawing of a frame must match MAME's pixel for pixel, whole (`--off` unset) and with layers switched off
+  (`--off scrolls` for sprites only, `--off scroll2,scroll3` and so on) to say which layer is wrong. Find the
+  record offset once with `--search` (dino: 1), then gate with it. Pick frames where the camera and sprites move:
+  a still title screen passes at any offset and with the capture's timing wrong.
 - Palettes: CPS2 palette RAM, 32 banks per layer in practice. Read it per frame from the golden or a CRAM dump.
 - `screen:pixels()` is final RGB, not palette indices. Do not reverse-map colours to pens.
 

@@ -1,8 +1,8 @@
 # Design: CPS-1 and CPS-Dash boards in the kit
 
 Status: DRAFT. Rollout steps 1 (capture), 2 (objects) and 3 (tiles) are built, host-tested and checked in
-MAME 0.289 on `dino` (CPS-Dash); see "Step 1 in MAME" and "Steps 2 and 3 in MAME" below. Steps 4 and 5 are not
-started.
+MAME 0.289 on `dino` (CPS-Dash), and so is a whole-frame reference with the scroll layers (`tools/cps_video.py`).
+See "Step 1 in MAME", "Steps 2 and 3 in MAME" and "Scroll layers in MAME" below. Steps 4 and 5 are not started.
 
 ## 1. Goal
 
@@ -254,7 +254,7 @@ runs of the same route differed. `mame_golden_run.py` now passes `-keyboardprovi
 
 ## Steps 2 and 3 in MAME
 
-`tools/sprite_check.py` is the acceptance check for steps 2 and 3. MAME draws the sprite layer on its own: the
+`tools/sprite_check.py` (now `tools/video_check.py --off scrolls`) is the acceptance check for steps 2 and 3. MAME draws the sprite layer on its own: the
 scroll layers are switched off by clearing their enable bits (0x16 on dino) in every write the game makes to the
 CPS-B layer control register. The kit then draws the same frame itself:
 - the object table comes from the golden's record (step 1's capture);
@@ -291,3 +291,56 @@ Known edge, by design: `cps_tiles.py` maps each key on its own, while the sprite
 and then steps through the row (`cps_objects.py` does the same as the hardware). A block that crosses a mapper
 range edge can therefore differ between the two. The Saturn side should map the base code first, as the hardware
 does.
+
+## Scroll layers in MAME
+
+`tools/cps_video.py` draws a whole CPS-1 / CPS-Dash frame as MAME draws it:
+- the three scroll maps: map layout, 14-bit scroll3 codes, flips, scroll1's alternating 8-pixel halves, scroll and
+  row scroll;
+- sprites;
+- the CPS-B layer order;
+- the priority masks, under which some pens of the layer just below the sprites cover them.
+
+It is the reference the Saturn side has to reproduce, and `tools/video_check.py` compares it with MAME's picture.
+The comparison uses GFX RAM and the CPS-A/CPS-B registers, captured beside the golden. The registers are
+write-only on the bus, so the capture reads MAME's own copies of them. Colours come from MAME's palette.
+
+Same set, stand-ins and audit caveat as before. Attract gameplay demo, `dino.yaml` with MAME's CPS_B_21_QS2 values:
+layer control at CPS-B + 0x0a, priority registers at 0x0c, 0x0e, 0x00 and 0x02, and enable masks 0x16 for all
+three layers.
+
+| Check | Result |
+| --- | --- |
+| Whole picture, 102 frames (3600 to 4590, with a run of 12 consecutive frames) | Offset 1: 102 of 102, 0 pixels differ. Offsets 0, 2 and 3 pass 4 of 102 |
+| Sprites only (`--off scrolls`), 50 frames | 50 of 50, 0 pixels differ |
+| Scroll2 off, scroll3 off, and both off, 50 frames each | 50 of 50 each, 0 pixels differ |
+| Scroll1 off alone | Refused: on dino its enable mask is shared with the other two layers |
+| Priority masks ignored (deliberate break, 34 frames) | 0 of 34 pass |
+| Layer order reversed, or a fixed s1-s2-s3-sprites order (deliberate breaks) | 0 of 34 pass |
+| Picture origin y off by 1, or scroll2 read with scroll1's map layout (deliberate breaks) | 0 of 34 pass |
+| Scroll-tile flips ignored (deliberate break) | 33 of 34 still pass: only one frame has a flipped scroll tile in view |
+| Scroll1 always the left half (deliberate break) | 34 of 34 still pass: not exercised |
+
+The first capture read GFX RAM and the registers at the end of the same frame as the picture. Every frame where
+the camera moved failed: the layers looked right but sat a few pixels out. Reading the state at the end of the
+frame before matched every frame. So the picture `screen:pixels()` returns at the end of a frame was drawn from
+the state one frame earlier, and `mame/video_frames.lua` now saves the state a frame early. Static frames passed
+both ways, so a still screen cannot catch a timing error like this one.
+
+What dino exercises in these frames: one layer order (scroll3, scroll2, sprites, scroll1 from the bottom), the
+priority registers 0x0, 0xfe, 0x7ffe and 0x7f00, and all four priority groups on scroll2.
+
+Not exercised, so not proven in MAME:
+- row scroll (video control bit 0 is never set);
+- scroll1's half selection;
+- scroll-tile flips beyond one frame;
+- other layer orders;
+- a mapper that actually maps;
+- scroll3 codes of 0x4000 and up;
+- stars and flip screen, which `cps_video.py` does not draw.
+
+The gameplay a route reaches, and a plain CPS-1 game, would cover more. `video_check.py` already captures any
+frames a route reaches.
+
+This also answers part of open question 3: the video check carries GFX RAM and the registers beside the golden,
+per captured frame, so the golden format did not need to change for this.

@@ -19,7 +19,8 @@ Run the smoke tests with `python -m unittest discover -s tests -v`. They use syn
 | `dis68k.py` | game logic | Bounded 68000 disassembly, vectors and cross references (capstone) |
 | `cps_objects.py` | graphics | Decodes CPS-2 and CPS-1 / CPS-Dash object lists (format from the board); tile funnel stats per frame over a golden. `cps2_objects.py` is the old name |
 | `cps_tiles.py` | graphics | CPS 4bpp planar tiles to Saturn 4bpp, deduped, SGP1 pack; the game's graphics ROM mapper for CPS-1 / CPS-Dash (`graphics.mapper`). `cps2_tiles.py` is the old name |
-| `sprite_check.py`, `mame/sprite_frames.lua` | graphics, capture | CPS-1 / CPS-Dash sprite layer drawn by the kit from a golden, compared pixel for pixel with MAME drawing sprites only (scroll layers masked off in the CPS-B layer control); `--search` finds the record offset |
+| `cps_video.py` | graphics | A CPS-1 / CPS-Dash frame as MAME draws it: scroll maps (layout, flips, scroll1 halves, row scroll), sprites, CPS-B layer order and priority masks. The reference for what goes in front of what |
+| `video_check.py`, `mame/video_frames.lua` | graphics, capture | The kit's drawing of a CPS-1 / CPS-Dash frame (`cps_video.py`, sprites from a golden) compared pixel for pixel with MAME's; `--off` switches layers off in MAME to isolate them, `--search` finds the record offset |
 | `page_plan.py` | graphics, memory | Shared pages, keep and restore sets, ranked tile drops per stage file |
 | `sector_store.py` | packaging | One shared store of unique 2 KB sectors for all round files, verified byte for byte |
 | `disc_budget.py` | packaging | Data + CDDA + pregap sectors against an 80- or 74-minute CD-R |
@@ -64,8 +65,9 @@ inputs from files, never from a game header.
 a register (CPS-1, CPS-Dash); the run then also writes `golden.bin.obj.txt`, one `irq base` line (hex base) each
 time the table moves, giving the first record that uses the new base.
 
-`sprite_frames.lua` (runs `golden.lua` first): `CPS2SAT_GOLDEN_LUA`, `CPS2SAT_LAYER_CTRL`, `CPS2SAT_FRAMES`,
-`CPS2SAT_FRAMES_DIR`, `CPS2SAT_GFX_OUT`, `CPS2SAT_GFX_REGION`. `sprite_check.py capture` sets them.
+`video_frames.lua` (runs `golden.lua` first): `CPS2SAT_GOLDEN_LUA`, `CPS2SAT_LAYER_CTRL`, `CPS2SAT_VIDEO_CTRL`,
+`CPS2SAT_FRAMES`, `CPS2SAT_FRAMES_DIR`, `CPS2SAT_GFX_RAM`, `CPS2SAT_REG_SHARES`, `CPS2SAT_GFX_OUT`,
+`CPS2SAT_GFX_REGION`. `video_check.py capture` sets them.
 
 `dump_code_spaces.lua`: `CPS2SAT_FIRST`, `CPS2SAT_LAST`, `CPS2SAT_OUT_PROGRAM`, `CPS2SAT_OUT_OPCODES`.
 `dump_rom_window.lua`: `CPS2SAT_FIRST`, `CPS2SAT_LAST`, `CPS2SAT_SPACE`, `CPS2SAT_OUT`.
