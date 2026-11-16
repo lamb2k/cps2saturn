@@ -1,0 +1,35 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 lamb2k and cps2saturn contributors
+ * Template. The runtime's link script with the three places code and data can live on a Saturn with the 4 MB cart:
+ * high work RAM (fast, 1 MB at 0x06000000, the loader sits just above the BIOS area, at 0x06004000), low work RAM (1 MB at 0x00200000, slower: a long write
+ * cost AvP measured at about 14 clocks a long write on the board) and the cart (0x02400000, 4 MB, data and cold code). The sections follow the same layout as
+ * avpsaturn v0.1.0-beta, saturn/rt/build.py's generated sat.ld (hot code high, spill low, cold code in the cart tail).
+ *
+ * Fill the holes (names between at-signs); saturn/ld/README.md says what each one is. A game lists its own object files in @HW_OBJECTS@ (high RAM first, the
+ * code that must be fast), @LW_OBJECTS@ and @CART_OBJECTS@. Anything not named lands in high RAM through the catch-all at the end. */
+SECTIONS {
+    .hw @HW_BASE@ : {
+        *sat_ctx*.o(.text)           /* _sat_start must sit at the entry address the loader jumps to */
+        @HW_OBJECTS@
+        *(.hw.text .hw.text.* .hwdata)
+        *(.text) *(.text.*) *(.rodata) *(.rodata.*) *(.data) *(.data.*)
+    }
+    .hwbss ALIGN(16) (NOLOAD) : {
+        __hwbss_start = .;
+        *(.hwbss) *(.bss) *(COMMON)
+        . = ALIGN(4); __hwbss_end = .;
+    }
+    .hwstack ALIGN(16) (NOLOAD) : { *(.hwstack) __hw_end = .; }
+
+    .lw @LW_BASE@ : {
+        @LW_OBJECTS@
+        *(.lw.text .lw.text.* .lwdata)
+    }
+    .lwbss ALIGN(16) (NOLOAD) : { __lwbss_start = .; *(.lwbss) . = ALIGN(4); __lwbss_end = .; __lw_end = .; }
+
+    .cart @CART_BASE@ : {
+        @CART_OBJECTS@
+        *(.cartcode .cartcode.* .cartdata)
+    }
+    /DISCARD/ : { *(.eh_frame*) *(.comment) }
+}

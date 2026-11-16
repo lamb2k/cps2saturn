@@ -1,0 +1,16 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 lamb2k and cps2saturn contributors
+ * Template, moved from avpsaturn v0.1.0-beta, saturn/rt/boot.ld (the loader's link script), with the stack area added.
+ *
+ * Loader (first stage) link script. IP.BIN loads this image at @LOADER_BASE@ (0x06004000 for a normal Saturn disc) and runs its first byte.
+ * Fill the holes (names between at-signs) with sed or a build script; saturn/ld/README.md says what each one is. */
+SECTIONS {
+    .text @LOADER_BASE@ : {
+        *(.text.start)
+        *(.text.startup)
+        *(.text) *(.text.*) *("SEGA_P") *(SLPROG) *(.strings) *(.rodata*) *(.data*)
+    }
+    .bss ALIGN(16) (NOLOAD) : { __bstart = .; *(.bss) *(COMMON) . = ALIGN(16); __bend = .; }
+    .stack ALIGN(16) (NOLOAD) : { . += @LOADER_STACK@; _sat_boot_sp = .; }
+    /DISCARD/ : { *(.eh_frame*) *(.comment) }
+}
