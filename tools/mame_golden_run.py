@@ -57,6 +57,9 @@ def build(c: dict, name: str, out_root: pathlib.Path, route: str | None, last: s
     cmd = [cfg.get(c, "paths.mame_exe") or "mame", cfg.get(c, "game.set"),
            "-rompath", cfg.get(c, "paths.rompath") or ".",
            "-video", "none", "-sound", "none", "-nothrottle", "-skip_gameinfo", "-autoboot_delay", "0",
+           # Host keys, mice and pads must not reach the game: the route is the only input.
+           "-keyboardprovider", "none", "-mouseprovider", "none", "-joystickprovider", "none",
+           "-lightgunprovider", "none",
            "-nvram_directory", str(out / "nvram"), "-cfg_directory", str(out / "cfg"),
            "-state_directory", str(out / "sta"), "-autoboot_script", str(HERE / "mame" / "golden.lua")]
     return cmd, env, out

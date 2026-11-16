@@ -1,7 +1,7 @@
 # Design: CPS-1 and CPS-Dash boards in the kit
 
-Status: DRAFT. Rollout step 1 (capture) is built and host-tested; its Lua changes have not run in MAME yet.
-Steps 2 to 5 are not started.
+Status: DRAFT. Rollout step 1 (capture) is built, host-tested and run in MAME 0.289 on `dino` (CPS-Dash),
+see "Step 1 in MAME" below. Steps 2 to 5 are not started.
 
 ## 1. Goal
 
@@ -213,8 +213,10 @@ Each step is one reviewable change, and none of them touches CPS-2 behaviour.
    method carries over from CPS-2 unchanged, and the genre matches AvP, so most of the playbook's lessons apply
    directly. A plain CPS-1 game means proving the FM + ADPCM audio path at the same time as the video changes.
 2. **When to sample the object base.** If a game flips the base between two tables, the host check has to agree
-   with MAME on which one counts at each IRQ. Dumping at IRQ entry matches MAME's vblank latch, but a game that
-   writes the register late in the frame could break that. Confirm this on the first game's golden.
+   with MAME on which one counts at each IRQ. `dino` does flip, every frame. At every IRQ entry the base the kit
+   tracked matched MAME's own register, and every table it dumped was complete. Still unchecked: whether MAME's
+   vblank copy reads the same table the kit dumps. A game that writes the register late in the frame could split
+   them.
 3. **Scroll maps and video registers are not in the golden on any board today.** The host check compares work
    RAM and objects only. Adding GFX RAM would help all three boards, but the delta format indexes words with a
    u16. 64 KB of work RAM plus 192 KB of GFX RAM is exactly 65536 words, so there is no room for the object
@@ -223,3 +225,28 @@ Each step is one reviewable change, and none of them touches CPS-2 behaviour.
    per game, as AvP did.
 5. **The CPS-2 flipped-block wrap.** MAME's own comment marks the unflipped wrap as a game-specific fix, so the
    CPS-2 behaviour may be incomplete emulation. It does not affect CPS-1, but `cps2_objects.py` copies it.
+
+## Step 1 in MAME
+
+MAME 0.289 tier, on Cadillacs and Dinosaurs (`dino`, World 930201, CPS-Dash), attract mode, 1200 frames, no
+route.
+
+The set did not audit clean. Every program, graphics and sound ROM matched, but six PAL logic dumps were missing
+or the wrong length (`cd63b.1a`, `d7l1.7l`, `d8l1.8l`, `d9k2.9k`, `d10f1.10f`, `ioc1.ic1`). They ran from
+zero-filled stand-ins, which MAME accepts with a checksum warning. MAME does not use PAL dumps to emulate the
+game, but a port's phase 0 gate still needs a clean audit.
+
+| Check | Result |
+| --- | --- |
+| `dump_code_spaces.lua` | Printed `NO_OPCODE_SPACE`, wrote the 2 MB program view. Level 2 vector (0x68) points at 0x542 |
+| `golden.lua` IRQ tap on the program space | 1127 records in 1200 frames, each 72 + 0x10000 + 0x800 bytes |
+| Object base tap | First write at IRQ 251. After that the base flips between 0x900000 and 0x904000 on every IRQ (double buffering) |
+| Tracked base against MAME's own `:cps_a_regs` share, read at each IRQ in a separate run | 876 of 876 match |
+| Dumped tables | Every table from IRQ 251 on has an end marker (up to 19 entries), except IRQs 849 and 850, where both buffers are all zero (a screen clear in attract) |
+| `golden_reader.py` without `ram.object_size` | Reads the records at the board's 0x800 |
+| Repeatability | Two runs are byte-identical, and a delta golden decodes to the same 1127 records as the full one. That holds only after the runner fix below |
+
+That run found one kit bug, which affects every board. The runner did not shut host input out of MAME: keys held
+on the Mac reached the game (one run read 0xffef at 0x800000, P1 button 1, where another read 0xffff), so two
+runs of the same route differed. `mame_golden_run.py` now passes `-keyboardprovider none -mouseprovider none
+-joystickprovider none -lightgunprovider none`. This changes the CPS-2 command line too, on purpose.

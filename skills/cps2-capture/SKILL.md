@@ -10,7 +10,9 @@ MAME is the ground truth for behaviour. Pin one build (the kit uses 0.289) and n
 ## Set up
 
 - Audit the set: `mame -verifyroms <set>`. Record the set name and MAME version in the config.
-- Run headless for captures: `-video none -sound none -nothrottle -skip_gameinfo -autoboot_delay 0`.
+- Run headless for captures: `-video none -sound none -nothrottle -skip_gameinfo -autoboot_delay 0`, with
+  `-keyboardprovider none -mouseprovider none -joystickprovider none -lightgunprovider none` so keys held on the
+  host never reach the game (a held Ctrl is P1 button 1, and two runs of one route then differ).
 - Give every run its own `-nvram_directory`, `-cfg_directory` and `-state_directory`, seeded from a known
   baseline, so a previous run's settings never leak in.
 - Check free disk before a long golden; refuse to overwrite an existing capture folder.
