@@ -39,6 +39,42 @@ void sat_v2l_write(SatV2Latch *l, unsigned byte_offset, unsigned value);   /* sl
 void sat_v2l_publish(SatV2Latch *l);                                       /* slave, once, when the picture's registers are all written */
 void sat_v2l_apply(SatV2Latch *l);                                         /* master, first thing at V-blank IN */
 
+/* ---- picture gated apply (lane vsync) ----
+   The latch above applies the newest published record at the first V-blank after the slave publishes it. The slave publishes right after it starts a VDP1 plot, but the frame change
+   for that picture comes at a later V-blank (when the plot has ended, and after the display hold), so the scroll layers can show picture N while the sprites still show N-1.
+   The gate ties both to one serial: the slave publishes a record for serial s (the number the kit's sat_v1_plot will have started: v1.started + 1 while it builds, v1.started after the
+   plot), the master applies the record whose serial is the picture VDP1 has just shown (v1.shown). Two record slots (serial & 1) are enough: the slave starts plot s + 2 only after
+   s + 1 was shown, and s was applied at its own change. Colour RAM writes the slave makes while building a picture go through a queue (sat_v2g_cram) and are written by the master
+   with the same record. gated = 0 gives the old order (newest record at the next V-blank), for A/B. Records carry the full register state (the writer accumulates every register ever written),
+   so a record that is skipped loses nothing. */
+#define SAT_V2G_CRAMQ 2048   /* queued colour RAM writes (entries); a full queue makes the writer wait for the master, then write directly (counted) */
+typedef struct SatV2Gate {
+    SatV2Latch *l;                       /* its wr/wv are the writer's pending registers, its pub/pv/seq the urgent record */
+    uint16_t rec[2][SAT_V2L_N];
+    uint8_t rv[2][SAT_V2L_N];
+    uint32_t rser[2];                    /* serial each slot holds, 0xffffffff = none */
+    uint32_t rcq[2];                     /* colour queue head at publish */
+    uint32_t rseq[2];                    /* odd while the slot is being written */
+    uint32_t newest;                     /* serial of the last publish */
+    uint32_t applied;                    /* serial of the record the registers hold (0xffffffff = none yet) */
+    uint32_t urg_seen;                   /* l->seq already applied by the urgent record */
+    uint32_t urg_floor;                  /* serial + 1 of the newest record published before the urgent one (0 none): such a record's registers are not applied, the urgent state stands */
+    uint32_t gated;                      /* 1 apply at the frame change of the same picture, 0 apply the newest record at the next V-blank (old order) */
+    volatile uint16_t *cram;             /* colour RAM base, or the host's array */
+    uint32_t cq_head, cq_tail;           /* queue positions (counts, not indexes) */
+    uint16_t cq_idx[SAT_V2G_CRAMQ], cq_val[SAT_V2G_CRAMQ];
+    uint32_t cq_direct;                  /* writes that found the queue full and went straight to colour RAM */
+    uint32_t cq_max;                     /* most entries ever pending */
+    uint32_t chk_n, chk_diff, chk_ahead, chk_behind;   /* per V-blank check: pictures the registers belong to against the picture VDP1 shows */
+    uint32_t chk_last_reg, chk_last_shown;
+} SatV2Gate;
+void sat_v2g_init(SatV2Gate *g, SatV2Latch *l, volatile uint16_t *cram, uint32_t gated);
+void sat_v2g_publish(SatV2Gate *g, uint32_t serial);                 /* slave: the record (all registers written so far) and the colour queue so far belong to this picture */
+void sat_v2g_urgent(SatV2Gate *g);                                   /* slave: apply the pending registers at the next V-blank whatever the picture (layers off while a pack loads) */
+void sat_v2g_cram(SatV2Gate *g, unsigned entry, unsigned value);   /* slave: a colour RAM write that belongs to the picture being built */
+void sat_v2g_apply(SatV2Gate *g, uint32_t shown);                    /* master, first thing at V-blank IN, after sat_v1_vblank so that shown is this V-blank's */
+void sat_v2g_check(SatV2Gate *g, uint32_t started, uint32_t shown);  /* master, last: counts the V-blank as a difference when the applied record is not the shown picture's */
+
 typedef struct SatVdp2Layout {
     uint16_t ramctl;               /* 0x0e */
     uint16_t cyc[8];               /* 0x10..0x1e: A0L A0U A1L A1U B0L B0U B1L B1U */
