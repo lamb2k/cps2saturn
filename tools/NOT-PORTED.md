@@ -9,8 +9,8 @@ Methods from many of them are written up in the skills and the playbook instead.
 | --- | --- |
 | `tools/verify_iso_file.py` | tools/iso_verify.py (adds --list) |
 | `tools/build_loader_ip.py` | tools/ip_bin.py (load address and offsets as arguments or config) |
-| `tools/satgfx_pack.py` | tools/cps2_tiles.py (region offsets from config) |
-| `tools/sat_tile_funnel.py` | tools/cps2_objects.py funnel (geometry from config) |
+| `tools/satgfx_pack.py` | tools/cps_tiles.py (region offsets from config) |
+| `tools/sat_tile_funnel.py` | tools/cps_objects.py funnel (geometry from config) |
 | `tools/learn_dis68k.py` | tools/dis68k.py (image path as an argument) |
 | `tools/mame_golden.lua` | tools/mame/golden.lua (all addresses and route bits from config) |
 | `tools/mame_golden_run.py` | tools/mame_golden_run.py (paths and set from config, --dry-run) |

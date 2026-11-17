@@ -1,6 +1,6 @@
 ---
 name: cps2-capture
-description: MAME-side capture and reference work for CPS2-to-Saturn ports. Use for pinning MAME, golden runs (per-IRQ work RAM and object RAM dumps), saved input routes, CPS2 object lists, palettes, tile decoding, watchpoints and read taps, the program/opcode encryption split, finding the game's debug menus, and treating MAME as the behaviour reference.
+description: MAME-side capture and reference work for CPS2-to-Saturn ports, and for CPS-1 and CPS-Dash ports (experimental). Use for pinning MAME, golden runs (per-IRQ work RAM and object RAM dumps), saved input routes, CPS2 object lists, palettes, tile decoding, watchpoints and read taps, the program/opcode encryption split, finding the game's debug menus, and treating MAME as the behaviour reference.
 ---
 
 # CPS2 capture: MAME as the reference
@@ -10,7 +10,9 @@ MAME is the ground truth for behaviour. Pin one build (the kit uses 0.289) and n
 ## Set up
 
 - Audit the set: `mame -verifyroms <set>`. Record the set name and MAME version in the config.
-- Run headless for captures: `-video none -sound none -nothrottle -skip_gameinfo -autoboot_delay 0`.
+- Run headless for captures: `-video none -sound none -nothrottle -skip_gameinfo -autoboot_delay 0`, with
+  `-keyboardprovider none -mouseprovider none -joystickprovider none -lightgunprovider none` so keys held on the
+  host never reach the game (a held Ctrl is P1 button 1, and two runs of one route then differ).
 - Give every run its own `-nvram_directory`, `-cfg_directory` and `-state_directory`, seeded from a known
   baseline, so a previous run's settings never leak in.
 - Check free disk before a long golden; refuse to overwrite an existing capture folder.
@@ -44,8 +46,15 @@ presses as a route. Replays of that route are deterministic.
 
 - CPS2 object RAM: 8-byte entries (x, y, code, attributes). End marker in y or attributes. Multi-tile blocks use
   nx/ny fields and flip bits; coordinates are signed 10-bit and wrap.
-- Decode with `tools/cps2_objects.py`: unwrap coordinates, keep tile order, flip, priority and palette bank.
-- Graphics ROM tiles are 4bpp planar. `tools/cps2_tiles.py` converts to Saturn 4bpp packed pens and dedupes.
+- Decode with `tools/cps_objects.py`: unwrap coordinates, keep tile order, flip, priority and palette bank.
+- Graphics ROM tiles are 4bpp planar. `tools/cps_tiles.py` converts to Saturn 4bpp packed pens and dedupes.
+- CPS-1 and CPS-Dash: the object table moves (golden.lua follows it), codes go through the game's ROM mapper
+  (`graphics.mapper`), and the first entry is drawn on top. Scroll maps, layer order and the priority masks that
+  let scroll pens cover sprites are in `tools/cps_video.py`. Prove all of it with `tools/video_check.py`: the
+  kit's drawing of a frame must match MAME's pixel for pixel, whole (`--off` unset) and with layers switched off
+  (`--off scrolls` for sprites only, `--off scroll2,scroll3` and so on) to say which layer is wrong. Find the
+  record offset once with `--search` (dino: 1), then gate with it. Pick frames where the camera and sprites move:
+  a still title screen passes at any offset and with the capture's timing wrong.
 - Palettes: CPS2 palette RAM, 32 banks per layer in practice. Read it per frame from the golden or a CRAM dump.
 - `screen:pixels()` is final RGB, not palette indices. Do not reverse-map colours to pens.
 

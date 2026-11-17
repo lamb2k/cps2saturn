@@ -8,16 +8,19 @@ Run the smoke tests with `python -m unittest discover -s tests -v`. They use syn
 | Tool | Area | What it does |
 | --- | --- | --- |
 | `cfg.py` | all | Loads the per-game config (PyYAML or a built-in reader), expands `${ENV}` values |
+| `boards.py` | all | Board facts from `game.board` (`cps2` default, `cps1`, `cpsdash`): opcode view, where the object table lives, its size; config values override |
 | `hygiene_scan.py` | repo | Pre-push scan: blocked file types, size, binary content, private paths, tokens, keys |
-| `mame/golden.lua` | capture | Golden run: per-IRQ registers + work RAM + object RAM (full or delta), I/O log, route playback, state saves |
-| `mame_golden_run.py` | capture | Runs MAME with `golden.lua` from the config; `--dry-run` prints the command |
+| `mame/golden.lua` | capture | Golden run: per-IRQ registers + work RAM + object RAM (full or delta), I/O log, route playback, state saves. On CPS-1 and CPS-Dash it taps the program space (no opcode view) and follows the object base register |
+| `mame_golden_run.py` | capture | Runs MAME with `golden.lua` from the config; seeds `nvram/` and `cfg/` from baselines; `--dry-run` prints the command |
 | `golden_reader.py` | capture, host check | Reads full or delta goldens; shows changed words; finds the first difference between two |
-| `mame/dump_code_spaces.lua` | capture | Dumps the program and decrypted opcode views over a range |
+| `mame/dump_code_spaces.lua` | capture | Dumps the program and decrypted opcode views over a range (program only on CPS-1 and CPS-Dash) |
 | `mame/dump_rom_window.lua` | capture | Dumps one program-space window (script tables) |
 | `mame/list_inputs.lua` | capture | Prints every input port and field, for the config's route bits |
 | `dis68k.py` | game logic | Bounded 68000 disassembly, vectors and cross references (capstone) |
-| `cps2_objects.py` | graphics | Decodes CPS2 object lists; tile funnel stats per frame over a golden |
-| `cps2_tiles.py` | graphics | CPS2 4bpp planar tiles to Saturn 4bpp, deduped, SGP1 pack |
+| `cps_objects.py` | graphics | Decodes CPS-2 and CPS-1 / CPS-Dash object lists (format from the board); tile funnel stats per frame over a golden. With a `graphics.mapper`, codes (and `--solid`) are graphics ROM tiles, each object's base mapped once. `cps2_objects.py` is the old name |
+| `cps_tiles.py` | graphics | CPS 4bpp planar tiles to Saturn 4bpp, deduped, SGP1 pack; the game's graphics ROM mapper for CPS-1 / CPS-Dash (`graphics.mapper`), with `"key_space": "rom"` in KEYS.json for keys already mapped. `cps2_tiles.py` is the old name |
+| `cps_video.py` | graphics | A CPS-1 / CPS-Dash frame as MAME draws it: scroll maps (layout, flips, scroll1 halves, row scroll), sprites, CPS-B layer order and priority masks. The reference for what goes in front of what |
+| `video_check.py`, `mame/video_frames.lua` | graphics, capture | The kit's drawing of a CPS-1 / CPS-Dash frame (`cps_video.py`, sprites from a golden) compared pixel for pixel with MAME's; `--off` switches layers off in MAME to isolate them, `--search` finds the record offset |
 | `page_plan.py` | graphics, memory | Shared pages, keep and restore sets, ranked tile drops per stage file |
 | `sector_store.py` | packaging | One shared store of unique 2 KB sectors for all round files, verified byte for byte |
 | `disc_budget.py` | packaging | Data + CDDA + pregap sectors against an 80- or 74-minute CD-R |
@@ -56,9 +59,15 @@ inputs from files, never from a game header.
 
 ## Environment values the MAME scripts read
 
-`golden.lua`: `CPS2SAT_OUT`, `CPS2SAT_IRQ_TAP`, `CPS2SAT_IRQ_VECTOR`, `CPS2SAT_WORK`, `CPS2SAT_OBJ`, `CPS2SAT_IO`,
-`CPS2SAT_MAXIRQ`, `CPS2SAT_DELTA`, `CPS2SAT_ROUTE`, `CPS2SAT_ROUTE_BITS`, `CPS2SAT_LAST`, `CPS2SAT_SAVE`.
-`mame_golden_run.py` sets all of them from the config.
+`golden.lua`: `CPS2SAT_OUT`, `CPS2SAT_IRQ_TAP`, `CPS2SAT_IRQ_VECTOR`, `CPS2SAT_WORK`, `CPS2SAT_OBJ`, `CPS2SAT_OBJ_REG`,
+`CPS2SAT_IO`, `CPS2SAT_MAXIRQ`, `CPS2SAT_DELTA`, `CPS2SAT_ROUTE`, `CPS2SAT_ROUTE_BITS`, `CPS2SAT_LAST`, `CPS2SAT_SAVE`.
+`mame_golden_run.py` sets all of them from the config. `CPS2SAT_OBJ_REG` is set only when the object table follows
+a register (CPS-1, CPS-Dash); the run then also writes `golden.bin.obj.txt`, one `irq base` line (hex base) each
+time the table moves, giving the first record that uses the new base.
+
+`video_frames.lua` (runs `golden.lua` first): `CPS2SAT_GOLDEN_LUA`, `CPS2SAT_LAYER_CTRL`, `CPS2SAT_VIDEO_CTRL`,
+`CPS2SAT_FRAMES`, `CPS2SAT_FRAMES_DIR`, `CPS2SAT_GFX_RAM`, `CPS2SAT_REG_SHARES`, `CPS2SAT_GFX_OUT`,
+`CPS2SAT_GFX_REGION`. `video_check.py capture` sets them.
 
 `dump_code_spaces.lua`: `CPS2SAT_FIRST`, `CPS2SAT_LAST`, `CPS2SAT_OUT_PROGRAM`, `CPS2SAT_OUT_OPCODES`.
 `dump_rom_window.lua`: `CPS2SAT_FIRST`, `CPS2SAT_LAST`, `CPS2SAT_SPACE`, `CPS2SAT_OUT`.

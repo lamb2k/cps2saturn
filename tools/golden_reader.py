@@ -17,6 +17,7 @@ from typing import Iterator
 
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+import boards  # noqa: E402
 import cfg  # noqa: E402
 
 HEAD = 8 + 64
@@ -46,7 +47,7 @@ def records(path: pathlib.Path, work_size: int, obj_size: int, delta: bool) -> I
 
 
 def sizes(c: dict) -> tuple[int, int, int]:
-    return cfg.get(c, "ram.work_base"), cfg.get(c, "ram.work_size"), cfg.get(c, "ram.object_size")
+    return cfg.get(c, "ram.work_base"), cfg.get(c, "ram.work_size"), boards.object_size(c)
 
 
 def main(argv=None) -> int:

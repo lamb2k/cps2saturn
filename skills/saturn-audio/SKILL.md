@@ -1,6 +1,6 @@
 ---
 name: saturn-audio
-description: Audio for CPS2-to-Saturn ports. Use for moving QSound effects to SCSP PCM, music to CDDA tracks, the game's sound command path, per-channel versus mixed-stream playback, SCSP RAM budgets per stage, the sound test and music player in home menus, and comparing emulator audio output against MAME.
+description: Audio for CPS2-to-Saturn ports, and for CPS-1 and CPS-Dash ports (experimental). Use for moving QSound effects to SCSP PCM, music to CDDA tracks, the game's sound command path, per-channel versus mixed-stream playback, SCSP RAM budgets per stage, the sound test and music player in home menus, and comparing emulator audio output against MAME.
 ---
 
 # Saturn audio for CPS2 ports
@@ -14,6 +14,18 @@ description: Audio for CPS2-to-Saturn ports. Use for moving QSound effects to SC
 - **Keep the game's command path.** The game sends sound commands through a ring or mailbox (AvP: 63 entries,
   silent drop when full). Hook that path natively: a command becomes a music track start or an SCSP voice. The game
   logic never knows the difference.
+
+## CPS-1 and CPS-Dash (not yet tried on a port)
+
+- **CPS-Dash** uses QSound like CPS-2, so the method above holds. Its Z80 driver is Kabuki-encrypted, and Kabuki
+  decrypts data and instructions differently. Read the command table (and any pointers in it) through the Z80
+  program view, where MAME puts the data-decrypted ROM; the separate opcode view holds instruction bytes only, and
+  tables read there come out wrong. Neither is the raw ROM file. Commands go through shared Q RAM
+  (0xf18000 and 0xf1e000 on the 68000 side, low bytes only); find the slots per game.
+- **Plain CPS-1** has a YM2151 (FM) and an OKI MSM6295 (ADPCM samples). Music goes to CDDA as above, rendered
+  from MAME. ADPCM effects decode to PCM and become SCSP clips. Effects made on the FM chip are recorded from
+  MAME per command, as clips. The 68000 sends commands through latches at 0x800180 (command) and 0x800188
+  (fade); hook that path.
 
 ## The sound table
 

@@ -1,6 +1,6 @@
 ---
 name: cps2-saturn-port
-description: End-to-end workflow and phase gates for porting a Capcom CPS2 arcade game to native Sega Saturn code with the 4 MB RAM cart. Use when starting a new CPS2-to-Saturn port, resuming one, choosing the next phase, deciding whether a phase gate has passed, or routing work to the capture, graphics, audio, game-logic, packaging, testing or orchestration skills. For software preservation work from material you are authorized to use.
+description: End-to-end workflow and phase gates for porting a Capcom CPS2 arcade game (or, experimentally, a CPS-1 or CPS-Dash game) to native Sega Saturn code with the 4 MB RAM cart. Use when starting a new CPS2-to-Saturn port, resuming one, choosing the next phase, deciding whether a phase gate has passed, or routing work to the capture, graphics, audio, game-logic, packaging, testing or orchestration skills. For software preservation work from material you are authorized to use.
 ---
 
 # CPS2 to Saturn port: the whole workflow
@@ -16,7 +16,9 @@ The project's own STATUS.md, backlog and owner instructions outrank this skill. 
    (`AGENTS.md` / `CLAUDE.md`) and the latest hand-back. Check `git status`, branch and recent commits.
 2. Check git history across branches before estimating a problem: it is often already solved somewhere.
 3. Confirm the ROM set is present locally and audited (`mame -verifyroms <set>`). Never copy or commit it.
-4. Find the per-game config (`configs/<set>.yaml`). Every tool reads game constants from it.
+4. Find the per-game config (`configs/<set>.yaml`). Every tool reads game constants from it. Its `game.board`
+   (`cps2`, `cps1`, `cpsdash`) says which board's rules the tools use; CPS-1 and CPS-Dash support is experimental,
+   see `docs/design/cps1-dash-boards.md` in the kit for what is proven.
 
 ## The architecture that works
 
