@@ -59,6 +59,29 @@ void sat_tc_init(SatTileCache *c, uint8_t *vram, uint32_t slot_bytes, uint16_t c
 void sat_tc_frame(SatTileCache *c);
 /* Slot number for key, uploading on a miss. SAT_TC_NOSLOT for blank, missing or refused. */
 uint16_t sat_tc_get(SatTileCache *c, uint32_t key);
+/* Same result and same effects as sat_tc_get, with the hit that sat_tc_get takes most often (the memo, or the first slot of the hash chain) done in the caller without a call (lane slavecost: a picture asks for 300 to
+   400 tiles, nearly all are in the cache, and the call with its register saves was a third of a hit). Anything else goes to sat_tc_get. -DSAT_TC_NOFAST makes it a plain call. */
+#ifndef SAT_TC_NOFAST
+static inline uint16_t sat_tc_get_fast(SatTileCache *c, uint32_t key)
+{
+    uint32_t way = key & 1;
+    if (c->memo_key[way] == key) return c->memo_slot[way];
+    {
+        uint16_t s = c->head[(key ^ (key >> 10)) & c->hmask];
+        if (s != SAT_TC_NOSLOT) {
+            SatTcSlot *r = &c->slots[s];
+            if (r->key == key) {
+                if (r->stamp != c->stamp) { r->stamp = c->stamp; c->used++; }
+                c->memo_key[way] = key; c->memo_slot[way] = s;
+                return s;
+            }
+        }
+    }
+    return sat_tc_get(c, key);
+}
+#else
+#define sat_tc_get_fast sat_tc_get
+#endif
 /* Decode ahead (lane cadence): the same lookup as sat_tc_get, called between two builds, for a tile a coming picture will probably need. A miss decodes and uploads it into a slot
    that neither the build just submitted nor the picture before it uses, and stamps it as the submitted build's, so the next build's sweep leaves it alone. No memo is touched.
    Call it only after sat_tc_commit of a build that was plotted, before the next sat_tc_frame. SAT_TC_NOSLOT for blank, missing or refused. */
