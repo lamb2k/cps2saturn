@@ -52,7 +52,7 @@ MAME models, which is the kit's reference; they are not hardware measurements.
 | Visible picture | 384 × 224 (cps1.h:39-47) | same | same |
 | Frame IRQ | Level 2 autovector, vector table entry 0x68 (cps1.cpp:348-416) | same | Level 2 at line 240, plus a raster IRQ on level 4 |
 | Game settings | DIP switches (DSWA-C), so MAME keeps them in `cfg/` | 93C46 EEPROM, so `nvram/` (cps1.cpp:4002) | 93C46 EEPROM, so `nvram/` |
-| Sound CPU | Z80, unencrypted | Z80 with Kabuki-encrypted opcodes (cps1.cpp:3993) | Z80, unencrypted in MAME |
+| Sound CPU | Z80, unencrypted | Z80 with Kabuki encryption: data decrypted into the program view, instructions into a separate opcode view (cps1.cpp:3993, kabuki.cpp:143-161, 188-190) | Z80, unencrypted in MAME |
 | Sound chips | YM2151 (FM) + OKI MSM6295 (ADPCM) | QSound | QSound |
 | 68000 → sound | Latches at 0x800180 (command) and 0x800188 (fade) | Shared Q RAM at 0xf18000 and 0xf1e000, low byte only | Shared Q RAM at 0x618000 |
 
@@ -162,7 +162,8 @@ The tools README should say this for all three boards.
 There is no kit code in this step, only skill text.
 
 - **Dash:** QSound, the same as CPS-2. The existing `saturn-audio` method holds. One difference: the Z80 sound
-  driver is Kabuki-encrypted, so read its command table from MAME's decrypted Z80 opcode space.
+  driver is Kabuki-encrypted, and Kabuki decrypts data and instructions differently: read its command table
+  through the Z80 program view (the data-decrypted ROM), and keep the opcode view for instruction bytes.
 - **Plain CPS-1:** music still goes to CDDA, rendered from MAME. Effects come from two sources:
   - OKI6295 ADPCM samples, decoded to PCM, become SCSP clips. This is simpler than QSound.
   - Effects made on the YM2151 are recorded from MAME per command, as clips.

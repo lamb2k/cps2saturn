@@ -33,6 +33,9 @@ ram:
   io_ranges:
     - [0x800000, 0x80001f]       # player inputs and DIP switches
     - [0xf1c000, 0xf1c007]       # cpsdash: extra inputs, coin control, EEPROM. cps1: drop this range
+    # cpsdash: if the 68000 reads sound status from shared Q RAM, log it too, as avspu logs 0x618000-0x619fff:
+    # - [0xf18000, 0xf19fff]
+    # - [0xf1e000, 0xf1ffff]
 
 inputs:
   # FILL: from tools/mame/list_inputs.lua. Entries are [MAME port tag, field name].

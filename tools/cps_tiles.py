@@ -22,15 +22,19 @@ graphics.mapper (fill it from your own work; the kit holds no game's table):
 The code is shifted by the layer (sprites 1, scroll1 0, scroll2 1, scroll3 3), looked up in the first range that
 holds it and allows the layer, rebased on the sizes of the banks before it, and shifted back. A code no range
 takes has no tile: its key is packed as blank. Without a mapper, codes are tile numbers (CPS-2).
-Keys are mapped one by one. The CPS-1 sprite hardware maps a block's base code and then steps through the 16-code
-row (cps_objects.py does the same), so a block that crosses a range edge can differ from its keys mapped singly.
+Key space. Codes are mapped exactly once. KEYS.json may say "key_space": "game" (the default: keys are the game's
+codes and the packer maps each one) or "rom" (keys are already graphics ROM tile numbers, as cps_objects.py
+prints them with a mapper, and the packer reads them as they are). Prefer "rom" for sprites: the CPS-1 sprite
+hardware maps a block's base code and then steps through the 16-code row, so a block that crosses a range edge
+can differ from its game codes mapped one by one.
 
 Pack format SGP1 (big endian): magic, then per section: key count, key table offset, data offset; then four
 (split index, spill offset) pairs, set to (all ones, 0) here. Key word = key << 16 | payload index (sprites) or
 key << 14 | payload index (scroll); an index of all ones means no visible pen. Identical payloads stored once.
 
 usage: cps_tiles.py GFX_REGION KEYS.json OUT.bin [--config CONFIG]
-  KEYS.json: {"sprite": [codes], "scroll1": [...], "scroll2": [...], "scroll3": [...]} (hex strings or ints)
+  KEYS.json: {"sprite": [codes], "scroll1": [...], "scroll2": [...], "scroll3": [...]} (hex strings or ints),
+             optionally "key_space": "game" | "rom"
 Output is derived from the game. Write it outside git.
 """
 from __future__ import annotations
@@ -66,6 +70,10 @@ class Mapper:
                 raise ValueError(f"graphics.mapper: unknown layer {sorted(bad)}; use {', '.join(LAYERS)}")
             if not 0 <= bank < len(self.sizes):
                 raise ValueError(f"graphics.mapper: bank {bank} has no size")
+            size = self.sizes[bank]
+            if size <= 0 or size & (size - 1):
+                raise ValueError(f"graphics.mapper: bank {bank} size {size:#x} must be a positive power of two "
+                                 "(fill bank_sizes from the game's mapper)")
             self.ranges.append((names, first, last, bank))
 
     def map(self, layer: str, code: int) -> int | None:
@@ -192,6 +200,11 @@ def main(argv=None) -> int:
     cb = cfg.get(c, "graphics.scroll_base", boards.value(c, "gfx_scroll_base"))
     mapper = mapper_from(c)
     spec = json.loads(a.keys.read_text())
+    space = spec.get("key_space", "game")
+    if space not in ("game", "rom"):
+        sys.exit(f'KEYS.json key_space {space!r}: expected "game" or "rom"')
+    if space == "rom":
+        mapper = None                            # keys are ROM tiles already: never map them twice
     used = [{int(k, 16) if isinstance(k, str) else int(k) for k in spec.get(n, [])} for n in SECTIONS]
     blob, sizes = pack(a.gfx.read_bytes(), used, sb, cb, mapper)
     a.out.write_bytes(blob)

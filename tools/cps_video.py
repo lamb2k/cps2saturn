@@ -9,7 +9,8 @@ Inputs for one frame:
   objects the object table the sprite hardware draws (see cps_objects.py)
   gfx     the graphics region (planar tiles, as cps_tiles.py reads it); mapper: the game's cps_tiles.Mapper
   game    from the config: video.layer_control and video.priority (CPS-B register offsets), video.layer_enable_masks
-          (three scroll layer enable masks), as the game's CPS-B setup gives them
+          (three scroll layer enable masks), as the game's CPS-B setup gives them. A priority offset of -1 means
+          the game has no such register (MAME's -1): that group's mask is 0 and no pen of it covers sprites
 Output: palette indices (0..0xbff) for the 384 x 224 picture; 0xbff is the background pen. Pages: sprites 0x000,
 scroll1 0x200, scroll2 0x400, scroll3 0x600. Flip screen, stars and bootleg quirks are not drawn.
 
@@ -27,8 +28,10 @@ How MAME draws it (src/mame/capcom/cps1_v.cpp, described, not copied):
   - Layer control (CPS-B): two bits per draw slot at bits 6, 8, 10, 12 (0 = sprites, 1-3 = scroll layers), bottom
     slot first; scroll layer n is on when layer control & its enable mask (and, for 2 and 3, the video control bit).
   - Each layer draws its pens other than 15. When sprites are the next slot, the layer just drawn also marks its
-    pixels whose pen is set in the priority register of the tile's group: sprites do not draw there. Sprites draw
-    in table order and the first opaque pixel at a spot wins.
+    pixels whose pen is set in the priority register of the tile's group: sprites do not draw there. Pen 15 is no
+    exception: MAME's tilemap transparency (set_transmask) treats all 16 pens alike, so a register with bit 15 set
+    lets transparent pixels of that layer hide sprites too. Sprites draw in table order and the first opaque pixel
+    at a spot wins.
 
 usage: imported by tools/video_check.py; cps_video.py has no command line.
 """
@@ -152,11 +155,12 @@ class Frame:
 
 
 def render(frame: Frame, objects: bytes, g: dict | None = None) -> list[int]:
-    """Palette indices of the whole picture, row by row."""
-    g = g or cps_objects.CPS1_DEFAULT
+    """Palette indices of the whole picture, row by row. g gives the object format; the picture is always MAME's
+    full 384 x 224, whatever crop a config's graphics.objects sets for the Saturn side."""
+    g = dict(g or cps_objects.CPS1_DEFAULT, view_x=X0, view_y=Y0, view_w=W, view_h=H)
     pix = [BACKGROUND] * (W * H)
     pri = [0] * (W * H)
-    prio = [frame.reg_b(o) for o in frame.game["priority"]]
+    prio = [frame.reg_b(o) if o >= 0 else 0 for o in frame.game["priority"]]   # -1: no register, mask 0
 
     def scroll(layer: int, high: bool):
         if not frame.enabled(layer):
@@ -165,7 +169,8 @@ def render(frame: Frame, objects: bytes, g: dict | None = None) -> list[int]:
             o = vy * W
             for vx, (pen, index, group) in enumerate(frame.scroll_line(layer, vy)):
                 if high:
-                    if (prio[group] >> pen) & 1:         # pen is opaque in the front mask (mask = priority ^ 0xffff)
+                    # pen is opaque in the front mask (mask = priority ^ 0xffff). Pen 15 included, as in MAME.
+                    if (prio[group] >> pen) & 1:
                         pri[o + vx] |= 1
                 elif pen != TRANSPARENT:
                     pix[o + vx] = index

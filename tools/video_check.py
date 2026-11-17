@@ -20,9 +20,12 @@ usage:
   video_check.py capture --config C --name NAME --frames F,F,... [--off LAYERS] [--last N] [--out-root DIR]
                          [--dry-run]
   video_check.py compare RUN_DIR --config C [--offset K] [--search] [--out DIR] [--max-pct 0]
+Frames are numbered from 1 and must be 2 or more: each picture needs the state from the frame before it.
 Sprites come from record (IRQs seen at the end of the frame) - 1 - offset. --search tries offsets 0..3 and
 reports each; pick one, then gate with it. Pick frames where things move: a still screen passes at any offset.
-Exit 0 pass, 1 a frame over --max-pct, 2 bad input. Everything written is derived from the game: keep it out of git.
+A capture that is missing a requested frame or any of its files fails, in capture and in compare.
+Exit 0 pass, 1 a frame over --max-pct or an incomplete capture, 2 bad input. Everything written is derived from
+the game: keep it out of git.
 """
 from __future__ import annotations
 
@@ -46,6 +49,7 @@ import lookdiff  # noqa: E402
 import mame_golden_run  # noqa: E402
 
 SCROLLS = ("scroll1", "scroll2", "scroll3")
+FRAME_FILES = ("rgb", "pal", "gfx", "regs")
 
 
 def game_video(c: dict) -> dict:
@@ -89,10 +93,31 @@ def off_taps(c: dict, off: str | None) -> dict:
     return env
 
 
+def incomplete(run: pathlib.Path, frames: list[int]) -> list[str]:
+    """What a capture run lacks for the requested frames: an empty list when it is whole."""
+    if not frames:
+        return ["no frames were requested"]
+    if not (run / "frames" / "frames.txt").exists():
+        return ["frames/frames.txt is missing"]
+    logged = {f for f, *_ in read_frames(run)[1]}
+    out = [f"frame {f} is not in frames.txt" for f in frames if f not in logged]
+    out += [f"frames/f{f:05d}.{ext} is missing" for f in frames for ext in FRAME_FILES
+            if not (run / "frames" / f"f{f:05d}.{ext}").exists()]
+    out += [f"{name} is missing" for name in ("gfx.bin", "golden.bin") if not (run / name).exists()]
+    return out
+
+
 def capture(a) -> int:
     c = cfg.load(a.config)
+    if cps_objects.geometry(c)["format"] != "cps1":
+        sys.exit("video_check captures CPS-1 / CPS-Dash video only (game.board cps1 or cpsdash)")
     game_video(c)
-    frames = sorted({int(f) for f in a.frames.split(",")})
+    try:
+        frames = sorted({int(f) for f in a.frames.split(",")})
+    except ValueError:
+        sys.exit(f"--frames {a.frames!r}: want comma-separated frame numbers")
+    if frames[0] < 2:
+        sys.exit("--frames: frame numbers start at 2 (each picture needs the state from the frame before it)")
     if frames[-1] >= a.last:
         sys.exit(f"--last {a.last} must be after the last frame {frames[-1]}")
     root = a.out_root or pathlib.Path(cfg.get(c, "paths.work") or ".") / "video_check"
@@ -120,9 +145,11 @@ def capture(a) -> int:
                                                        off=a.off or "", delta=True), indent=1))
     with open(out / "stdout.txt", "w") as log:
         r = subprocess.run(cmd, env=dict(os.environ, **env), stdout=log, stderr=subprocess.STDOUT, timeout=a.timeout)
-    got = len(read_frames(out)[1]) if (out / "frames" / "frames.txt").exists() else 0
-    print("exit", r.returncode, "frames", got, "of", len(frames), "->", out)
-    return r.returncode if got == len(frames) else 1
+    lacking = incomplete(out, frames)
+    print("exit", r.returncode, "frames", len(frames), "capture", "incomplete" if lacking else "complete", "->", out)
+    for line in lacking[:10]:
+        print("incomplete:", line)
+    return r.returncode or (1 if lacking else 0)
 
 
 def read_frames(run: pathlib.Path) -> tuple[str, list[tuple[int, int, int, int]]]:
@@ -162,7 +189,14 @@ def compare(a) -> int:
     mapper = cps_tiles.mapper_from(c)
     run = a.run
     manifest = json.loads((run / "manifest.json").read_text())
+    lacking = incomplete(run, manifest.get("frames", []))
+    if lacking:
+        print(f"run {run.name}: incomplete capture, not compared")
+        for line in lacking[:10]:
+            print("incomplete:", line)
+        return 1
     order, frames = read_frames(run)
+    frames = [f for f in frames if f[0] in set(manifest["frames"])]
     gfx = (run / "gfx.bin").read_bytes()
     _, ws, osz = golden_reader.sizes(c)
     offsets = range(4) if a.search else [a.offset]

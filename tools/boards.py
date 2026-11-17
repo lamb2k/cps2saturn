@@ -50,23 +50,29 @@ def value(c: dict, key: str):
     return BOARDS[name(c)][key]
 
 
+def _override(c: dict, dotted: str, key: str):
+    """The config's value when it sets one (0 included), else the board's."""
+    v = cfg.get(c, dotted)
+    return value(c, key) if v is None else v
+
+
 def cps_a(c: dict) -> int:
-    return cfg.get(c, "video.cps_a") or value(c, "cps_a")
+    return _override(c, "video.cps_a", "cps_a")
 
 
 def cps_b(c: dict) -> int:
-    return cfg.get(c, "video.cps_b") or value(c, "cps_b")
+    return _override(c, "video.cps_b", "cps_b")
 
 
 def object_table(c: dict) -> str:
-    t = cfg.get(c, "ram.object_table") or value(c, "object_table")
+    t = _override(c, "ram.object_table", "object_table")
     if t not in ("fixed", "register"):
         sys.exit(f"ram.object_table {t!r}: expected fixed or register")
     return t
 
 
 def object_size(c: dict) -> int:
-    return cfg.get(c, "ram.object_size") or value(c, "object_size")
+    return _override(c, "ram.object_size", "object_size")
 
 
 if __name__ == "__main__":
@@ -76,5 +82,6 @@ if __name__ == "__main__":
     if object_table(c) == "register":
         print("cps_a", hex(cps_a(c)), "gfx_ram", hex(value(c, "gfx_ram")), "align", hex(value(c, "object_align")))
     else:
-        print("object_base", hex(cfg.get(c, "ram.object_base")))
+        base = cfg.get(c, "ram.object_base")
+        print("object_base", hex(base) if isinstance(base, int) else "MISSING (ram.object_base is needed for a fixed table)")
     print("opcode_space", value(c, "opcode_space"))

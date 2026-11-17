@@ -89,10 +89,11 @@ end)
 function cps2sat_golden_irq() return irq end
 
 local obj_reg = os.getenv("CPS2SAT_OBJ_REG")
+local objlog = nil
 if obj_reg and obj_reg ~= "" then
     local reg, align = pair(obj_reg)
     local gfx_ram, value = obj_base, 0
-    local objlog = assert(io.open(path .. ".obj.txt", "w"))
+    objlog = assert(io.open(path .. ".obj.txt", "w"))
     cps2sat_obj_reg = prog:install_write_tap(reg, reg + 1, "cps2sat_objreg", function(off, data, mask)
         value = (value & ~mask | data & mask) & 0xffff
         local base = gfx_ram + ((value * 256) & ~(align - 1) & 0x3ffff)
@@ -138,5 +139,9 @@ cps2sat_frames = emu.add_machine_frame_notifier(function()
         end
     end
     if saves[frame] then manager.machine:save("f" .. frame) end
-    if last and frame == last then iolog:close(); out:close(); manager.machine:exit() end
+    if last and frame == last then
+        iolog:close(); out:close()
+        if objlog then objlog:close() end
+        manager.machine:exit()
+    end
 end)

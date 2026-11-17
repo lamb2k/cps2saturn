@@ -17,8 +17,10 @@ description: Audio for CPS2-to-Saturn ports, and for CPS-1 and CPS-Dash ports (e
 
 ## CPS-1 and CPS-Dash (not yet tried on a port)
 
-- **CPS-Dash** uses QSound like CPS-2, so the method above holds. Its Z80 driver is Kabuki-encrypted: read the
-  command table through MAME's decrypted Z80 opcode view, not the raw ROM. Commands go through shared Q RAM
+- **CPS-Dash** uses QSound like CPS-2, so the method above holds. Its Z80 driver is Kabuki-encrypted, and Kabuki
+  decrypts data and instructions differently. Read the command table (and any pointers in it) through the Z80
+  program view, where MAME puts the data-decrypted ROM; the separate opcode view holds instruction bytes only, and
+  tables read there come out wrong. Neither is the raw ROM file. Commands go through shared Q RAM
   (0xf18000 and 0xf1e000 on the 68000 side, low bytes only); find the slots per game.
 - **Plain CPS-1** has a YM2151 (FM) and an OKI MSM6295 (ADPCM samples). Music goes to CDDA as above, rendered
   from MAME. ADPCM effects decode to PCM and become SCSP clips. Effects made on the FM chip are recorded from

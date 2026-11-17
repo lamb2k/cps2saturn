@@ -68,6 +68,24 @@ class Cps1CaptureTest(unittest.TestCase):
         self.assertEqual(golden_reader.sizes(example()), (0xFF0000, 0x10000, 0x2000))
 
 
+class OverrideTest(unittest.TestCase):
+    def test_zero_is_an_override_not_a_fallback(self):
+        c = example("cps1", drop_objects=True, cps_a=0)
+        self.assertEqual(boards.cps_a(c), 0)
+        self.assertEqual(boards.cps_b(example("cps1")), 0x800140)
+
+    def test_main_reports_a_missing_fixed_base(self):
+        import subprocess
+        import sys
+        with tempfile.TemporaryDirectory() as d:
+            path = pathlib.Path(d) / "c.yaml"
+            path.write_text(_util.EXAMPLE.read_text().replace("  object_base: 0x708000\n", ""))
+            r = subprocess.run([sys.executable, str(_util.TOOLS / "boards.py"), str(path)], capture_output=True,
+                               text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("object_base MISSING", r.stdout)
+
+
 class Cps1ExampleTest(unittest.TestCase):
     PATH = _util.ROOT / "configs" / "cps1.example.yaml"
 
@@ -119,6 +137,7 @@ class LuaTest(unittest.TestCase):
         self.assertIn('"CPS2SAT_OBJ_REG"', golden)
         self.assertIn('spaces["opcodes"] or prog', golden)
         self.assertIn("install_write_tap", golden)
+        self.assertIn("if objlog then objlog:close() end", golden)
         dump = (_util.TOOLS / "mame" / "dump_code_spaces.lua").read_text()
         self.assertIn("NO_OPCODE_SPACE", dump)
 

@@ -17,8 +17,8 @@ Run the smoke tests with `python -m unittest discover -s tests -v`. They use syn
 | `mame/dump_rom_window.lua` | capture | Dumps one program-space window (script tables) |
 | `mame/list_inputs.lua` | capture | Prints every input port and field, for the config's route bits |
 | `dis68k.py` | game logic | Bounded 68000 disassembly, vectors and cross references (capstone) |
-| `cps_objects.py` | graphics | Decodes CPS-2 and CPS-1 / CPS-Dash object lists (format from the board); tile funnel stats per frame over a golden. `cps2_objects.py` is the old name |
-| `cps_tiles.py` | graphics | CPS 4bpp planar tiles to Saturn 4bpp, deduped, SGP1 pack; the game's graphics ROM mapper for CPS-1 / CPS-Dash (`graphics.mapper`). `cps2_tiles.py` is the old name |
+| `cps_objects.py` | graphics | Decodes CPS-2 and CPS-1 / CPS-Dash object lists (format from the board); tile funnel stats per frame over a golden. With a `graphics.mapper`, codes (and `--solid`) are graphics ROM tiles, each object's base mapped once. `cps2_objects.py` is the old name |
+| `cps_tiles.py` | graphics | CPS 4bpp planar tiles to Saturn 4bpp, deduped, SGP1 pack; the game's graphics ROM mapper for CPS-1 / CPS-Dash (`graphics.mapper`), with `"key_space": "rom"` in KEYS.json for keys already mapped. `cps2_tiles.py` is the old name |
 | `cps_video.py` | graphics | A CPS-1 / CPS-Dash frame as MAME draws it: scroll maps (layout, flips, scroll1 halves, row scroll), sprites, CPS-B layer order and priority masks. The reference for what goes in front of what |
 | `video_check.py`, `mame/video_frames.lua` | graphics, capture | The kit's drawing of a CPS-1 / CPS-Dash frame (`cps_video.py`, sprites from a golden) compared pixel for pixel with MAME's; `--off` switches layers off in MAME to isolate them, `--search` finds the record offset |
 | `page_plan.py` | graphics, memory | Shared pages, keep and restore sets, ranked tile drops per stage file |
