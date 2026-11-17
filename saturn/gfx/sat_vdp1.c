@@ -22,6 +22,8 @@ void sat_v1_init(SatVdp1 *v, volatile uint8_t *vram, volatile uint16_t *regs, ui
     v->started = v->shown = v->held = v->sync = v->waits = 0;
     v->cef_asked = v->cef_forced = v->replots = v->kicked = 0;
     v->wait_max = SAT_SLAVE_WAIT_MAX; v->ticks = ticks; v->prev = 0;
+    v->hold_min = 1; v->since = 0x7fffffffu; v->gated = 0;
+    for (t = 0; t < 5; t++) v->since_hist[t] = 0;
     REG(v, SAT_VDP1_TVMR) = 0;
     REG(v, SAT_VDP1_EWDR) = 0;
     REG(v, SAT_VDP1_EWLR) = 0;
@@ -39,15 +41,24 @@ void sat_v1_init(SatVdp1 *v, volatile uint8_t *vram, volatile uint16_t *regs, ui
 volatile uint8_t *sat_v1_cmd(SatVdp1 *v) { return v->vram + v->table[v->cur] + SAT_V1_FIRST_CMD; }
 void sat_v1_end(SatVdp1 *v, volatile uint8_t *after_last) { (void)v; W16(after_last, SAT_V1_END_CODE); }
 
-void sat_v1_vblank(SatVdp1 *v)
+void sat_v1_set_hold(SatVdp1 *v, uint32_t vblanks) { UNC(v->hold_min) = vblanks < 1u ? 1u : vblanks; }
+
+void sat_v1_vblank(SatVdp1 *v) { sat_v1_vblank_ended(v, 0); }
+
+void sat_v1_vblank_ended(SatVdp1 *v, int ended)
 {
-    uint32_t s = UNC(v->started);
+    uint32_t s = UNC(v->started), since = UNC(v->since);
     UNC(v->sync) = 1;
+    if (since < 0x7fffffffu) since++;
+    UNC(v->since) = since;
     if (s != UNC(v->shown)) {
-        if (REG(v, SAT_VDP1_EDSR) & SAT_EDSR_CEF) {
+        if (ended || (REG(v, SAT_VDP1_EDSR) & SAT_EDSR_CEF)) {
+            if (since < UNC(v->hold_min)) { UNC(v->gated) = UNC(v->gated) + 1; return; }   /* finished, shown at the vblank that makes the picture before it last hold_min vblanks */
             REG(v, SAT_VDP1_FBCR) = 3;      /* change, erase and draw at the change */
             UNC(v->shown) = s;
             UNC(v->held) = 0;
+            { uint32_t i = since < 1u ? 0u : since > 5u ? 4u : since - 1u; v->since_hist[i]++; }
+            UNC(v->since) = 0;
         } else {
             UNC(v->held) = UNC(v->held) + 1;
             UNC(v->waits) = UNC(v->waits) + 1;

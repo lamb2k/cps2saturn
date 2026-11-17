@@ -10,6 +10,11 @@
  *   and counts it in `shown`. A list still plotting at a vblank keeps the last whole picture on screen one more frame: a dropped frame,
  *   never a half drawn one. The slave touches the table again only once the last plot is shown.
  *
+ *   Picture rate (lane cadence): `hold_min` is the fewest vblank-ins between two frame changes. 1 (the default) is the behaviour above: a finished
+ *   plot is shown at the next vblank. 2 holds a finished plot until 2 vblanks after the last change, so every picture is shown exactly 2 vblanks
+ *   (a steady 30 pictures a second); a plot that is not finished by then is shown as soon as it is. `since_hist` counts the vblanks each picture
+ *   was shown for (diagnostic).
+ *
  * Why it is built this way: emulators forgive a plot that is cut by the frame change and a console shows it. The change shifts the end flag
  * (the current frame's flag becomes the previous one's), so "CEF went clear" is the sign that the change really happened, and waiting for the end of
  * vblank instead raced the emulator's own latch (11 % of pictures went back to an older plot). Timeouts exist for a chip state that was replaced
@@ -41,6 +46,9 @@ typedef struct SatVdp1 {
     uint32_t waits;                    /* frames the master held the last picture because VDP1 had not finished (diagnostic) */
     uint32_t cef_asked, cef_forced, replots;   /* stuck end-flag recoveries (diagnostic) */
     uint32_t kicked;                   /* serial of the plot already started again once */
+    uint32_t hold_min, since;          /* fewest vblanks between two frame changes, vblank-ins since the last change (shared between the CPUs, through the uncached alias) */
+    uint32_t gated;                    /* vblanks at which a finished plot was held back by hold_min (diagnostic) */
+    uint32_t since_hist[5];            /* vblanks each picture was shown for: 1, 2, 3, 4, more (diagnostic) */
     uint32_t wait_max;                 /* slave FRT ticks to wait at each step */
     uint32_t (*ticks)(void);           /* the slave's timer; the host test supplies a counter */
     int prev;                          /* a plot has been submitted before (the first plot has no earlier change to latch) */
@@ -53,8 +61,13 @@ void sat_v1_init(SatVdp1 *v, volatile uint8_t *vram, volatile uint16_t *regs, ui
 volatile uint8_t *sat_v1_cmd(SatVdp1 *v);
 void sat_v1_end(SatVdp1 *v, volatile uint8_t *after_last);
 
+/* Fewest vblanks a picture is shown for (1 or 2): written by the master at the hand-off point, read by the vblank hook. */
+void sat_v1_set_hold(SatVdp1 *v, uint32_t vblanks);
+
 /* Master, first thing in the vblank-in handler (after the display registers are applied). Asks for the change if the last plot ended. */
 void sat_v1_vblank(SatVdp1 *v);
+/* The same, for a host that knows better than the end flag (an emulator that moves CEF into BEF before the handler runs): ended != 0 counts the plot as finished. */
+void sat_v1_vblank_ended(SatVdp1 *v, int ended);
 
 /* Slave, before touching the table or any texture slot: wait for the last plot to end. 0 = timed out: abandon this build and keep the game going. */
 int sat_v1_wait_end(SatVdp1 *v);

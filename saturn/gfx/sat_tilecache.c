@@ -102,3 +102,9 @@ uint16_t sat_tc_get(SatTileCache *c, uint32_t key)
     }
     return c->memo_slot[way];
 }
+
+uint16_t sat_tc_prefetch(SatTileCache *c, uint32_t key)
+{
+    /* Between builds c->stamp is the stamp of the last submitted plot (sat_tc_commit made it prev_stamp), so tc_find neither evicts its slots nor the ones it just stamped; a hit restamps. */
+    return tc_find(c, key);
+}

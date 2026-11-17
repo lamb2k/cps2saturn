@@ -59,6 +59,10 @@ void sat_tc_init(SatTileCache *c, uint8_t *vram, uint32_t slot_bytes, uint16_t c
 void sat_tc_frame(SatTileCache *c);
 /* Slot number for key, uploading on a miss. SAT_TC_NOSLOT for blank, missing or refused. */
 uint16_t sat_tc_get(SatTileCache *c, uint32_t key);
+/* Decode ahead (lane cadence): the same lookup as sat_tc_get, called between two builds, for a tile a coming picture will probably need. A miss decodes and uploads it into a slot
+   that neither the build just submitted nor the picture before it uses, and stamps it as the submitted build's, so the next build's sweep leaves it alone. No memo is touched.
+   Call it only after sat_tc_commit of a build that was plotted, before the next sat_tc_frame. SAT_TC_NOSLOT for blank, missing or refused. */
+uint16_t sat_tc_prefetch(SatTileCache *c, uint32_t key);
 /* VRAM address of a slot. */
 static inline uint8_t *sat_tc_slot_addr(const SatTileCache *c, uint16_t slot) { return c->vram + (uint32_t)slot * c->slot_bytes; }
 /* The plot of this build was submitted: its slots are now the previous plot's. */

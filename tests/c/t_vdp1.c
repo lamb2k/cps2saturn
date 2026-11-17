@@ -48,5 +48,21 @@ int main(void)
     R(SAT_VDP1_FBCR) = 0; CHECK_EQ(sat_v1_plot(&v), 1); CHECK_EQ(v.cef_asked, 1); CHECK_EQ(v.cef_forced, 1); CHECK_EQ(R(SAT_VDP1_FBCR), 3);
     /* the change never confirmed (master never shows it): the slave times out and the caller keeps its texture protection */
     fresh(); sat_v1_vblank(&v); CHECK_EQ(sat_v1_plot(&v), 1); CHECK_EQ(sat_v1_plot(&v), 0);
+    /* lane cadence: hold_min 2 holds a finished plot until 2 vblanks after the last change (a steady 30), a plot not finished by then is shown as soon as it is; hold_min 1 is the old behaviour */
+    fresh(); sat_v1_vblank(&v); CHECK_EQ(v.hold_min, 1);
+    CHECK_EQ(sat_v1_plot(&v), 1); R(SAT_VDP1_EDSR) = SAT_EDSR_CEF; R(SAT_VDP1_FBCR) = 0;
+    sat_v1_vblank(&v); CHECK_EQ(v.shown, 1); CHECK_EQ(v.gated, 0); CHECK_EQ(v.since, 0);     /* default: shown at the first vblank, picture one vblank */
+    sat_v1_set_hold(&v, 2); R(SAT_VDP1_EDSR) = 0; CHECK_EQ(sat_v1_plot(&v), 1); R(SAT_VDP1_EDSR) = SAT_EDSR_CEF; R(SAT_VDP1_FBCR) = 0;
+    sat_v1_vblank(&v); CHECK_EQ(v.shown, 1); CHECK_EQ(v.gated, 1); CHECK_EQ(R(SAT_VDP1_FBCR), 0);   /* finished, held back one vblank */
+    sat_v1_vblank(&v); CHECK_EQ(v.shown, 2); CHECK_EQ(R(SAT_VDP1_FBCR), 3); CHECK_EQ(v.since, 0);  /* shown 2 vblanks after the last change */
+    CHECK_EQ(v.since_hist[4], 1); CHECK_EQ(v.since_hist[1], 1);
+    R(SAT_VDP1_EDSR) = 0; CHECK_EQ(sat_v1_plot(&v), 1);                                      /* a late plot: not finished at the 2nd vblank, shown at the 3rd as soon as it is */
+    sat_v1_vblank(&v); sat_v1_vblank(&v); CHECK_EQ(v.shown, 2); CHECK_EQ(v.held, 2);
+    R(SAT_VDP1_EDSR) = SAT_EDSR_CEF; sat_v1_vblank(&v); CHECK_EQ(v.shown, 3); CHECK_EQ(v.since_hist[2], 1); CHECK_EQ(v.since_hist[3], 0);
+    /* an emulator that reports the end of the plot another way (sat_v1_vblank_ended) goes through the same hold rule */
+    fresh(); sat_v1_vblank(&v); CHECK_EQ(sat_v1_plot(&v), 1); R(SAT_VDP1_EDSR) = 0; R(SAT_VDP1_FBCR) = 0;
+    sat_v1_vblank_ended(&v, 1); CHECK_EQ(v.shown, 1); CHECK_EQ(R(SAT_VDP1_FBCR), 3);
+    sat_v1_set_hold(&v, 2); CHECK_EQ(sat_v1_plot(&v), 1); R(SAT_VDP1_FBCR) = 0;
+    sat_v1_vblank_ended(&v, 1); CHECK_EQ(v.shown, 1); CHECK_EQ(v.gated, 1); sat_v1_vblank_ended(&v, 1); CHECK_EQ(v.shown, 2);
     PASS();
 }

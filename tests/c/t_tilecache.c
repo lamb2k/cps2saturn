@@ -46,5 +46,19 @@ int main(void)
     uploads = 0; sat_tc_frame(&c);
     for (i = 0; i < 7; i++) { a = sat_tc_get(&c, 400 + i); CHECK(a != SAT_TC_NOSLOT); CHECK_EQ(vram[a * 8], (400 + i) & 0xff); }
     CHECK_EQ(uploads, 0);
+    /* decode ahead (lane cadence): between two builds a prefetch uploads a missing tile into a slot the plot in flight and the one before it do not use, and a hit stamps it as the submitted plot's,
+       so the next build's sweep leaves it alone and finds it without an upload */
+    sat_tc_init(&c, vram, 8, CAP, 1, slots, head, 16, neg, 16, fetch, up, 0); c.protect_prev = 1;
+    sat_tc_frame(&c); for (i = 0; i < 4; i++) CHECK(sat_tc_get(&c, 500 + i) != SAT_TC_NOSLOT);
+    sat_tc_commit(&c); uploads = 0;
+    a = sat_tc_prefetch(&c, 600); CHECK(a != SAT_TC_NOSLOT); CHECK_EQ(uploads, 1); CHECK_EQ(vram[a * 8], 600 & 0xff); CHECK_EQ(slots[a].stamp, c.prev_stamp);
+    CHECK_EQ(sat_tc_prefetch(&c, 600), a); CHECK_EQ(uploads, 1);                                  /* a second ask is a hit */
+    CHECK_EQ(sat_tc_prefetch(&c, 1005), SAT_TC_NOSLOT); CHECK_EQ(sat_tc_prefetch(&c, 2005), SAT_TC_NOSLOT);   /* blank and missing: nothing uploaded */
+    for (i = 0; i < 4; i++) { b = sat_tc_prefetch(&c, 700 + i); if (i < 2) CHECK(b != SAT_TC_NOSLOT); }  /* 7 usable slots: 4 + 1 + 2 filled, the rest refused */
+    CHECK_EQ(c.refused, 2);
+    for (i = 0; i < 4; i++) { b = sat_tc_get(&c, 500 + i); (void)b; }
+    sat_tc_frame(&c); uploads = 0;                                                                /* the next build: its own earlier tiles and the prefetched one are all hits */
+    CHECK(sat_tc_get(&c, 600) == a); CHECK_EQ(uploads, 0);
+    sat_tc_commit(&c); sat_tc_frame(&c); CHECK(sat_tc_get(&c, 800) != SAT_TC_NOSLOT);              /* the build after that may evict the prefetched tiles it did not use */
     PASS();
 }
