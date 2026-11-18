@@ -27,6 +27,17 @@ vertical_cell_scroll_ok. A missing map_banks or cell_banks means "the banks wher
 Trace: one register write per line, the last two fields are the register address (offset, or 25F8xxxx) and the value, both
 hex; lines starting with # are skipped, any other line ends a burst. The state is judged at the end of each burst while the
 display is on and a layer is enabled. Exit 0 pass, 1 rule broken, 2 bad input.
+
+Writer scan (a static check of the SOURCE, no spec needed):
+  vdp2_cycle_check.py --scan-writers SRCDIR [--allow FILE] [--writer NAME ...] [--skip-ifdef NAME ...] [--ok-pattern REGEX]
+Every write in the C sources under SRCDIR to a register the rules cover (RAMCTL, the eight cycle words, CHCTLA/B, the pattern name and map
+registers, PLSZ, ZMCTL) at a literal offset must take its value from the game's layout macros (--ok-pattern, default names starting SAT_V2_
+or SAT_CYC_), or be listed in the allowlist with a reason. Why: the rules above judge one set of words, and a second place that writes those
+registers with its own numbers (a diagnostic screen, a mode that rewrites the cycles, a reveal screen) is never judged. A new writer fails until
+someone reviews it. The writers it looks for are `NAME(0xOFF) = value;` and `NAME([object,] 0xOFF, value);` for each --writer (default SAT_VDP2_REG and
+sat_v2l_write). Lines inside `#ifdef NAME` blocks listed with --skip-ifdef (a build that never ships) are skipped. Writes at computed offsets
+are not seen: the trace replay (--trace) covers those on a real run. Used with a spec, both run and either failing fails the exit code.
+Allowlist lines: `file | substring of the line | reason` (# comments; all three parts required). An entry that matches nothing is reported as stale.
 """
 from __future__ import annotations
 
@@ -185,6 +196,79 @@ def check(codes, layers, enabled, split_a, split_b, label="pattern", vcell_ok=Fa
     if ("A0" in pn_banks and "B0" in pn_banks) or ("A1" in pn_banks and "B1" in pn_banks):
         errs.append(f"{label}: pattern name reads in both {sorted(pn_banks)}: only one of A0/B0 and one of A1/B1 allowed")
     return errs, warns, info
+
+
+# ---- writer scan ----
+
+# Registers whose values the rules above read: RAMCTL, the cycle words, character/colour control, plane size, pattern names, maps, zoom/reduction.
+WATCH = {0x0e, *CYC_OFFSETS, 0x28, 0x2a, 0x30, 0x32, 0x34, 0x36, 0x3a, 0x40, 0x42, 0x44, 0x46, 0x48, 0x4a, 0x4c, 0x4e, 0x98}
+DEFAULT_WRITERS = ("SAT_VDP2_REG", "sat_v2l_write")
+DEFAULT_OK = r"\bSAT_(?:V2|CYC)_\w+"
+SCAN_SUFFIXES = {".c", ".h", ".inc"}
+
+
+def load_writer_allow(path):
+    """`file | substring | reason` lines -> [(file, substring, reason)]."""
+    allow = []
+    if not path:
+        return allow
+    try:
+        text = pathlib.Path(path).read_text(encoding="utf-8")
+    except OSError as e:
+        raise BadInput(f"cannot read allowlist {path}: {e}")
+    for n, raw in enumerate(text.splitlines(), 1):
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        f = [x.strip() for x in line.split("|")]
+        if len(f) < 3 or not f[0] or not f[1] or not "|".join(f[2:]).strip():
+            raise BadInput(f"{path}:{n}: need `file | substring | reason`")
+        allow.append((f[0], f[1], "|".join(f[2:]).strip()))
+    return allow
+
+
+def scan_writers(root, allow, writers=DEFAULT_WRITERS, skip_ifdefs=(), ok_pattern=DEFAULT_OK):
+    """-> (problems, covered writes seen, stale allowlist entries). Paths in messages and in the allowlist are relative to root."""
+    root = pathlib.Path(root)
+    if not root.is_dir():
+        raise BadInput(f"not a folder: {root}")
+    names = "|".join(re.escape(w) for w in writers)
+    rx = re.compile(r"\b(?:" + names + r")\(\s*(?:[^,()]+,\s*)?(0x[0-9a-fA-F]+)\s*(?:\)\s*=\s*([^;]+);|,\s*([^;]+)\);)")
+    ok = re.compile(ok_pattern)
+    problems, seen, used = [], 0, set()
+    for path in sorted(root.rglob("*")):
+        if not path.is_file() or path.suffix not in SCAN_SUFFIXES:
+            continue
+        rel = path.relative_to(root).as_posix()
+        depth, skip_depth, skipping = 0, 0, False
+        for no, line in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            st = line.strip()
+            if st.startswith("#if"):
+                depth += 1
+                if not skipping and any(re.match(r"#ifdef\s+" + re.escape(n) + r"\b", st) for n in skip_ifdefs):
+                    skipping, skip_depth = True, depth
+            elif st.startswith("#endif"):
+                if skipping and depth == skip_depth:
+                    skipping = False
+                depth -= 1
+            if skipping:
+                continue
+            code = re.sub(r"/\*.*?\*/", "", line).split("//", 1)[0]
+            for m in rx.finditer(code):
+                off = int(m.group(1), 16)
+                if off not in WATCH:
+                    continue
+                rhs = (m.group(2) or m.group(3) or "").strip()
+                seen += 1
+                if ok.search(rhs):
+                    continue
+                hit = next((i for i, (f, sub, _) in enumerate(allow) if f == rel and sub in line), None)
+                if hit is not None:
+                    used.add(hit)
+                    continue
+                problems.append(f"{rel}:{no}: write of VDP2 {off:#05x} = {rhs} is not from a layout macro and not on the writers allowlist")
+    stale = [f"{f} | {sub} | {why}" for i, (f, sub, why) in enumerate(allow) if i not in used]
+    return problems, seen, stale
 
 
 # ---- spec files ----
@@ -350,13 +434,30 @@ def fmt(msgs, tag, quiet=False):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="VDP2 VRAM access-cycle rule checker")
-    ap.add_argument("spec")
+    ap.add_argument("spec", nargs="?")
+    ap.add_argument("--scan-writers", metavar="SRCDIR", help="scan C sources for writes of the covered registers that bypass the layout macros (see the header)")
+    ap.add_argument("--allow", help="writer scan: allowlist file, lines `file | substring | reason`")
+    ap.add_argument("--writer", action="append", help="writer scan: a register write macro or function name (default SAT_VDP2_REG, sat_v2l_write); repeatable")
+    ap.add_argument("--skip-ifdef", action="append", default=[], help="writer scan: skip the #ifdef NAME blocks of a build that never ships; repeatable")
+    ap.add_argument("--ok-pattern", default=DEFAULT_OK, help="writer scan: a value matching this regex counts as coming from the layout macros")
     ap.add_argument("--trace", help="register-write trace to replay instead of the spec's cycle words")
     ap.add_argument("--cyc", help="eight hex cycle words A0L,A0U,A1L,A1U,B0L,B0U,B1L,B1U overriding the spec")
     ap.add_argument("--quiet", action="store_true", help="errors only")
     ap.add_argument("--limit", type=int, default=8, help="trace: distinct states to list")
     a = ap.parse_args(argv)
     try:
+        scan_fail = 0
+        if a.scan_writers:
+            problems, seen, stale = scan_writers(a.scan_writers, load_writer_allow(a.allow), tuple(a.writer or DEFAULT_WRITERS), a.skip_ifdef, a.ok_pattern)
+            print(f"writer scan: {seen} covered register writes in {a.scan_writers}, {len(problems)} not from a layout macro or the allowlist")
+            fmt(problems, "ERROR")
+            fmt([f"stale allowlist entry (matches no write): {x}" for x in stale], "warning", a.quiet)
+            scan_fail = 1 if problems else 0
+            if not a.spec:
+                print("vdp2_cycle_check:", f"FAIL ({len(problems)} writers)" if problems else "PASS")
+                return scan_fail
+        if not a.spec:
+            raise BadInput("a spec file is needed (or --scan-writers SRCDIR)")
         spec = load_spec(a.spec)
         if a.trace:
             try:
@@ -371,7 +472,7 @@ def main(argv=None):
                 print(f"  x{v[1]:<5} cycles {' '.join('%04x' % r.get(o, 0) for o in CYC_OFFSETS)} BGON {r.get(BGON, 0):02x} -> "
                       + ("FAIL: " + v[0][0] if v[0] else "ok"))
             print("vdp2_cycle_check:", f"FAIL ({len(bad)} states)" if bad else "PASS")
-            return 1 if bad else 0
+            return 1 if bad or scan_fail else 0
         words = [int(x, 16) for x in a.cyc.split(",")] if a.cyc else None
         errs, warns, info = check_spec(spec, words)
     except BadInput as e:
@@ -381,7 +482,7 @@ def main(argv=None):
     fmt(warns, "warning", a.quiet)
     fmt(info, "info", a.quiet)
     print("vdp2_cycle_check:", f"FAIL ({len(errs)} errors)" if errs else "PASS")
-    return 1 if errs else 0
+    return 1 if errs or scan_fail else 0
 
 
 if __name__ == "__main__":

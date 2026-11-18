@@ -50,7 +50,7 @@ inputs from files, never from a game header.
 
 | Tool | Area | What it does |
 | --- | --- | --- |
-| `vdp2_cycle_check.py` | graphics | VDP2 VRAM access-cycle rules from a JSON/YAML spec or a register-write trace: name and cell read counts per layer (reduced layers need 2+2), legal cell timing for the name timing, split-bank CPU slots with a no-access slot in front |
+| `vdp2_cycle_check.py` | graphics | VDP2 VRAM access-cycle rules from a JSON/YAML spec or a register-write trace: name and cell read counts per layer (reduced layers need 2+2), legal cell timing for the name timing, split-bank CPU slots with a no-access slot in front; `--scan-writers SRCDIR` also fails any source write of those registers at a literal offset that does not take its value from the layout macros and is not on a reviewed allowlist (`file \| substring \| reason`), so a second writer cannot dodge the rules |
 | `align_gate.py` | SH-2 build | 2/4-byte alignment of data symbols from nm output, literal offsets of wide accessors, and a reviewed list of pointer-cast sites; emulators allow what the SH-2 faults on |
 | `latch_model.py` | SH-2 timing | Exhaustive interleaving model of a publish/apply protocol: a per-register latch mixes old and new values, a sequence-word snapshot never does |
 | `loader_replay.py` | loading | Replays a JSON read plan (coalesced or not) over files into a memory model; compares final regions with sequential loading; multiplicative checksum, because a rotating xor cancels over overlapping regions |
