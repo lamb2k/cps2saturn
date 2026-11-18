@@ -4,7 +4,7 @@
 #include "../../saturn/gfx/sat_vdp2.h"
 #include "check.h"
 
-static uint16_t regs[0x90]; static SatV2Latch L; static SatV2Gate G; static uint16_t cram[4096];
+static uint16_t regs[0x90]; static SatV2Latch L; static SatV2Gate G; static uint16_t cram[4096]; static uint8_t vram2[0x1000];
 static int hook_calls;
 static void bump(SatV2Latch *l) { hook_calls++; if (hook_calls == 1) { l->seq += 2; } }   /* a publish landed during the copy: the apply must re-read */
 
@@ -37,7 +37,7 @@ int main(void)
     CHECK_EQ(sat_shadow_write32(vram, 0x01020304, &shadow), 0);
     /* picture gate (lane vsync): the registers and the queued colour writes of picture s are applied only when s is the picture shown */
     memset(regs, 0, sizeof regs); memset(cram, 0, sizeof cram);
-    sat_v2l_init(&L, regs); sat_v2g_init(&G, &L, cram, 1);
+    sat_v2l_init(&L, regs); sat_v2g_init(&G, &L, cram, vram2, 1);
     sat_v2l_write(&L, 0x20, 0x000f); sat_v2l_write(&L, 0x70, 0x0100);
     sat_v2g_cram(&G, 3, 0x8001); sat_v2g_cram(&G, 4, 0x8002);
     CHECK_EQ(cram[3], 0);                                         /* queued, not written at draw time */
@@ -46,6 +46,11 @@ int main(void)
     sat_v2g_check(&G, 1, 0); CHECK_EQ(G.chk_n, 1); CHECK_EQ(G.chk_diff, 1); CHECK_EQ(G.chk_behind, 1);
     sat_v2g_apply(&G, 1); CHECK_EQ(regs[0x20 / 2], 0x000f); CHECK_EQ(regs[0x70 / 2], 0x0100); CHECK_EQ(cram[3], 0x8001); CHECK_EQ(cram[4], 0x8002); CHECK_EQ(G.applied, 1);
     sat_v2g_check(&G, 1, 1); CHECK_EQ(G.chk_diff, 1);
+    /* VRAM names: queued, written with the picture's record (host VRAM is native endian here) */
+    sat_v2g_name(&G, 0x10, 0x11223344u); sat_v2g_name(&G, 0x14, 0x55667788u);
+    CHECK_EQ(*(uint32_t *)(vram2 + 0x10), 0);
+    sat_v2g_publish(&G, 7); sat_v2g_apply(&G, 6); CHECK_EQ(*(uint32_t *)(vram2 + 0x10), 0);
+    sat_v2g_apply(&G, 7); CHECK_EQ(*(uint32_t *)(vram2 + 0x10), 0x11223344u); CHECK_EQ(*(uint32_t *)(vram2 + 0x14), 0x55667788u);
     /* picture 2 built and published while picture 1 is still shown: nothing changes until its own change */
     sat_v2l_write(&L, 0x70, 0x0200); sat_v2g_cram(&G, 3, 0x8009); sat_v2g_publish(&G, 2);
     sat_v2g_apply(&G, 1); CHECK_EQ(regs[0x70 / 2], 0x0100); CHECK_EQ(cram[3], 0x8001);
@@ -70,6 +75,9 @@ int main(void)
     /* a full queue: the writer waits, then writes straight through (counted) */
     G.gated = 1; { unsigned i; for (i = 0; i < SAT_V2G_CRAMQ; i++) sat_v2g_cram(&G, 10, 0x8000 | i); }
     CHECK_EQ(G.cq_direct, 0); CHECK_EQ(G.cq_max, SAT_V2G_CRAMQ);
-    sat_v2g_cram(&G, 11, 0x8abc); CHECK_EQ(G.cq_direct, 1); CHECK_EQ(cram[11], 0x8abc);
+    sat_v2g_cram(&G, 11, 0x8abc); CHECK_EQ(G.cq_direct, 1); CHECK_EQ(cram[10], 0x8000 | (SAT_V2G_CRAMQ - 1));   /* one unpublished picture fills the queue: no waiting, the queue is written out in order, then the new entry queued */
+    CHECK_EQ(cram[11], 0);
+    { unsigned i; for (i = 0; i < SAT_V2G_NAMEQ; i++) sat_v2g_name(&G, 0x100, i); }
+    sat_v2g_name(&G, 0x104, 0xabcd); CHECK_EQ(G.nq_direct, 1); CHECK_EQ(*(uint32_t *)(vram2 + 0x100), (uint32_t)(SAT_V2G_NAMEQ - 1)); CHECK_EQ(*(uint32_t *)(vram2 + 0x104), 0);
     PASS();
 }
