@@ -28,7 +28,10 @@ emulator in the same scene, and the emulator will never show it.
   animation. A held-picture percentage is not missed game frames.
 - Windows that contain a load, KO or continue read high or low. Keep them out of speed figures.
 - Put the speed counters on an on-screen readout behind a compile-time switch, with the build id, for console photos.
-  The readout costs fast RAM (AvP: about 2.8 KB), so it never ships in a release build.
+  The readout costs fast RAM (AvP: about 2.8 KB), so it never ships in a release build. The kit's `saturn/rt/sat_readout.c`
+  is that readout without the game: PIC, DONE, MISS, SKIP, HELD, TICK (your game's tick byte, from your config, per 60
+  vblanks), a PROF line and the `HW SND n OK TEST t` power-up line; you give it counters and a cell callback. Label every
+  figure from a photo HARDWARE and keep the first console disc's photo checklist next to it.
 
 ## Place code and data by measured heat
 

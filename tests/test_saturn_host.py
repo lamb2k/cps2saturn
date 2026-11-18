@@ -76,6 +76,9 @@ class ModuleScenarioTests(unittest.TestCase):
     def test_handoff(self):
         self.scenario("t_sync", "saturn/rt/sat_sync.c")
 
+    def test_readout(self):
+        self.scenario("t_readout", "saturn/rt/sat_readout.c")
+
 
 @unittest.skipUnless(CC, "no host C compiler")
 class StoreTests(unittest.TestCase):
