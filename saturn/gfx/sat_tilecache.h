@@ -42,6 +42,7 @@ typedef struct SatTileCache {
     uint16_t hmask;           /* hash heads - 1, a power of two minus one */
     uint32_t *neg;            /* negative cache, entries of tag = key << 1 | missing; NULL for none */
     uint32_t neg_mask;        /* entries - 1 */
+    uint32_t *evict[2];       /* optional (NULL none; lane route60): bitmaps of capacity bits; a slot given to another key sets its bit in both, so a caller that kept slot numbers can tell they still hold their key */
     uint32_t memo_key[2];
     uint16_t memo_slot[2];
     int (*fetch)(void *ctx, uint32_t key, const uint8_t **payload);
