@@ -118,7 +118,7 @@ def link_images(gcc, env, out_dir, base):
     # runtime: sat_ctx first by the template, the rest in any order
     rt = out_dir / "rt.ld"
     rt.write_text(fill(ld / "rt.ld.in", {"HW_BASE": "0x06014000", "HW_OBJECTS": "", "LW_BASE": "0x00200000", "LW_OBJECTS": "", "CART_BASE": "0x02400000", "CART_OBJECTS": ""}))
-    names = ("sat_ctx", "sat_sync", "sat_pad", "sat_opx", "sat_vdp1", "sat_vdp2", "sat_tilecache", "sat_layer", "sat_scsp", "sat_cdda", "sat_store", "sat_diag", "link_stubs_rt")
+    names = ("sat_ctx", "sat_sync", "sat_pad", "sat_opx", "sat_vdp1", "sat_vdp2", "sat_tilecache", "sat_layer", "sat_scsp", "sat_cdda", "sat_store", "sat_diag", "sat_readout", "link_stubs_rt")
     rc, text, mp = link_one(gcc, env, out_dir, "runtime", [o(n) for n in names], rt)
     start = map_symbol(mp, "_sat_start")
     if rc or start != 0x06014000:
