@@ -6,6 +6,19 @@
 
 #define UNC(x) SAT_UNC32(x)
 
+/* True while a published picture waits for the master's apply to drain a queue: the publish mark (head at the last publish) is ahead of the tail. The signed difference keeps this right across the
+   wrap of the 32 bit counters. It is false when the tail is level with the mark or AHEAD of it, which happens when a direct drain (a writer's own write-out of a full queue, or the master's early
+   drain) moved the tail past a published picture: nothing published is left to wait for, and a writer that waited anyway ran its whole SAT_V2G_WAIT count for nothing (the fight start freeze of MvC,
+   RUNTIME 67: head 11592, tail 10568, pub 9544, 840,000,000 model cycles with the master blocked in a disc wait). */
+static int pending(uint32_t pub, uint32_t tail) { return (int32_t)(pub - tail) > 0; }
+
+#ifdef SAT_HOST
+void (*sat_v2g_wait_hook)(SatV2Gate *g);   /* host tests only: runs once per spin of a writer's wait, to play the master (apply) or to count the spins */
+#define WAIT_HOOK(g) do { if (sat_v2g_wait_hook) sat_v2g_wait_hook(g); } while (0)
+#else
+#define WAIT_HOOK(g) ((void)0)
+#endif
+
 void sat_v2l_init(SatV2Latch *l, volatile uint16_t *regs)
 {
     unsigned i;
@@ -63,7 +76,7 @@ void sat_v2g_cram(SatV2Gate *g, unsigned entry, unsigned value)
     uint32_t h = UNC(g->cq_head), n, spin = 0;
     if (!UNC(g->gated)) { g->cram[entry] = (uint16_t)value; return; }   /* old order: the direct write at draw time */
     while (h - UNC(g->cq_tail) >= SAT_V2G_CRAMQ) {
-        if (UNC(g->cq_tail) != UNC(g->cq_pub) && ++spin < SAT_V2G_WAIT) continue;   /* a published picture is pending: the master drains it at its frame change */
+        if (pending(UNC(g->cq_pub), UNC(g->cq_tail)) && ++spin < SAT_V2G_WAIT) { WAIT_HOOK(g); continue; }   /* a published picture is pending: the master drains it at its frame change */
         g->cq_direct++; drain(g, h); h = UNC(g->cq_head); break;                    /* one picture alone is more than the queue, or the master never came: write what is queued now, in order (early, as the old order) */
     }
     SAT_UNC16(g->cq_idx[h % SAT_V2G_CRAMQ]) = (uint16_t)entry; SAT_UNC16(g->cq_val[h % SAT_V2G_CRAMQ]) = (uint16_t)value;
@@ -77,7 +90,7 @@ void sat_v2g_name(SatV2Gate *g, uint32_t addr, uint32_t value)
     uint32_t h = UNC(g->nq_head), n, spin = 0;
     if (!UNC(g->gated)) { *(volatile uint32_t *)(void *)(g->vram + addr) = value; return; }   /* old order: the direct write at draw time */
     while (h - UNC(g->nq_tail) >= SAT_V2G_NAMEQ) {
-        if (UNC(g->nq_tail) != UNC(g->nq_pub) && ++spin < SAT_V2G_WAIT) continue;
+        if (pending(UNC(g->nq_pub), UNC(g->nq_tail)) && ++spin < SAT_V2G_WAIT) { WAIT_HOOK(g); continue; }
         g->nq_direct++; drain_names(g, h); h = UNC(g->nq_head); break;
     }
     SAT_UNC32(g->nq_addr[h % SAT_V2G_NAMEQ]) = addr; SAT_UNC32(g->nq_val[h % SAT_V2G_NAMEQ]) = value;

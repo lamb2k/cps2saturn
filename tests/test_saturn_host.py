@@ -64,6 +64,9 @@ class ModuleScenarioTests(unittest.TestCase):
     def test_vdp2_latch_and_layout(self):
         self.scenario("t_vdp2", "saturn/gfx/sat_vdp2.c")
 
+    def test_vdp2_writer_wait(self):
+        self.scenario("t_vdp2wait", "saturn/gfx/sat_vdp2.c")
+
     def test_pad_sequence(self):
         self.scenario("t_pad", "saturn/rt/sat_pad.c")
 
