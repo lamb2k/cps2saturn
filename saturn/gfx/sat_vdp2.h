@@ -48,7 +48,9 @@ void sat_v2l_apply(SatV2Latch *l);                                         /* ma
    with the same record. gated = 0 gives the old order (newest record at the next V-blank), for A/B. Records carry the full register state (the writer accumulates every register ever written),
    so a record that is skipped loses nothing. */
 #define SAT_V2G_CRAMQ 1024   /* queued colour RAM writes (entries) */
-#define SAT_V2G_WAIT 20000000u   /* spins a writer waits for the master to drain a published picture before it writes the queue out itself */
+#define SAT_V2G_WAIT 200000u   /* spins a writer waits for the master to drain a published picture before it writes the queue out itself. A spin is about 42 cycles (cache-through reads of the gate's tail and publish mark in RAM; modelled: 20,000,000
+   spins ran 840,000,000 cycles), so 200,000 spins = 8.4 million cycles = 0.29 s at 28.64 MHz = 17.6 V-blanks at 60 Hz: more than the few frames a published picture waits for its plot
+   to end and its frame change, and 1/100 of the old bound when the master cannot come (interrupts masked in a disc wait). The wait only runs while a published picture is pending (see pending() in sat_vdp2.c). */
 #define SAT_V2G_NAMEQ 1024   /* queued 32 bit VDP2 VRAM writes (scroll names): a full queue makes the writer wait for the master when the master has something to drain, else write directly (counted) */
 typedef struct SatV2Gate {
     SatV2Latch *l;                       /* its wr/wv are the writer's pending registers, its pub/pv/seq the urgent record */
@@ -81,6 +83,9 @@ void sat_v2g_cram(SatV2Gate *g, unsigned entry, unsigned value);   /* slave: a c
 void sat_v2g_name(SatV2Gate *g, uint32_t byte_addr, uint32_t value);  /* slave: a 32 bit VDP2 VRAM write (a scroll name) that belongs to the picture being built */
 void sat_v2g_apply(SatV2Gate *g, uint32_t shown);                    /* master, first thing at V-blank IN, after sat_v1_vblank so that shown is this V-blank's */
 void sat_v2g_check(SatV2Gate *g, uint32_t started, uint32_t shown);  /* master, last: counts the V-blank as a difference when the applied record is not the shown picture's */
+#ifdef SAT_HOST
+extern void (*sat_v2g_wait_hook)(SatV2Gate *g);                      /* host tests only: called once per spin of a writer's wait (NULL = none) */
+#endif
 
 typedef struct SatVdp2Layout {
     uint16_t ramctl;               /* 0x0e */
