@@ -22,7 +22,10 @@ clean, and plan the first hardware discs as diagnostic tools, not as releases.
   - Display-register latch model (see `saturn-graphics`), `tools/latch_model.py`.
 - **A strict emulator copy.** Patch one emulator copy to log misaligned accesses (filter instruction-fetch noise)
   and run boot, a stage and a KO with it. Keep a positive control: a build that reintroduces a known bad access
-  must show up in the log.
+  must show up in the log. `tools/ymir_misalign_gate.py` reads that log (format in its header), filters the
+  emulator's own instruction fetches, fails on every data access that is not on a reviewed PC list, and with
+  `--expect-hits` checks that the patched emulator writes the log at all. The kit has no emulator patch: GPL code
+  stays out of it, so write your own against the log format.
 - Write a hardware test sheet: what to photograph, which screens, what the readout lines mean.
 
 ## Diff register writes against a known-good program
