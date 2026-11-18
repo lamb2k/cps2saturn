@@ -189,7 +189,7 @@ class ReadmeTest(unittest.TestCase):
         for p in sorted(SATURN.rglob("*")):
             if p.suffix in (".c", ".h", ".S", ".in"):
                 head = p.read_text(encoding="utf-8")[:700]
-                if "SPDX-License-Identifier: MIT" not in head or not re.search(r"avpsaturn v0\.1\.0-beta|[Ww]ritten for the kit|[Ww]ritten for the kit", head):
+                if "SPDX-License-Identifier: MIT" not in head or not re.search(r"avpsaturn (v0\.1\.0-beta|release/v0\.1\.2-beta)|[Ww]ritten for the kit", head):
                     bad.append(p.name)
         self.assertEqual(bad, [])
 

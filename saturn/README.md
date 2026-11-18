@@ -35,7 +35,8 @@ Each row: what it is, its interface, and what a game must supply.
 | --- | --- | --- |
 | `boot/crt0.S` | Entry of the loader image: interrupts off, stack, bss clear, `sat_boot_main()` | Nothing. Link it first (`ld/boot.ld.in`). A loader that keeps SGL's own start code skips it |
 | `boot/sat_diag.c`, `sat_diag.h` | Boot display on VDP2's back screen: a band per step, a progress tick, 16 bit stripes, a red or magenta flash on failure. `sat_diag_init/stage/tick/info/fail`, exception stubs, a six word call table (`SAT_DIAG_API_ADDR`) the runtime uses until its own first picture | The 512 VDP2 VRAM bytes at `SAT_DIAG_TAB_ADDR` kept clear; optionally `sat_diag_restore` to put back registers it changed |
-| `boot/sat_boot.c`, `sat_boot.h` | `sat_boot_clock_change()` (BIOS service for the 352 wide mode, then VDP2 registers zeroed as SGL does), `sat_boot_cart_enable()` (4 MB cart on the BIOS timing, then a faster timing, with fallback and coded failures), `sat_boot_enter()` | The faster A-bus timing words if the defaults do not suit (`SAT_CART_OURS_*`) |
+| `boot/sat_boot.c`, `sat_boot.h` | `sat_boot_clock_change()` (BIOS service for the 352 wide mode, then VDP2 registers zeroed as SGL does), `sat_boot_cart_enable()` (4 MB cart on the BIOS timing, then a faster timing that has to pass the soak test, with fallback to the BIOS timing, a SAROO left on its own timing, and coded failures), `sat_boot_enter()` | The faster A-bus timing words if the defaults do not suit (`SAT_CART_OURS_*`); `SAT_CART_BIOS_TIMING` to never try the faster one |
+| `boot/sat_cart_soak.c`, `sat_cart_soak.h` | The cart timing soak test: `sat_soak_run()` (pure, runs on a PC) and `sat_boot_cart_soak()` (the cart at `SAT_CART_SOAK_BASE`, then a cache purge) | `SAT_CART_SOAK_BASE`: a cart area nothing has been loaded into yet |
 | `boot/sat_boot_main.c`, `sat_boot_main.h` | The loader's `main()`: diagnostics, clock, cart, GFS, each listed file to its address, publish the region loader, enter the runtime | `sat_boot_files[]` (name, address, failure code) and `sat_boot_file_count`; optionally `sat_boot_before_enter()` |
 | `ld/boot.ld.in`, `ld/rt.ld.in`, `ld/README.md` | Link script templates with `@NAME@` holes: loader, and runtime with high work RAM, low work RAM and cart sections | The object lists and base addresses |
 
@@ -86,7 +87,7 @@ Each row: what it is, its interface, and what a game must supply.
 
 Loader (first stage, IP.BIN loads it at `0x06004000`):
 
-1. Fill `ld/boot.ld.in`, link `boot/crt0.S`, `sat_boot*`, `sat_diag`, `cd/sat_gfs_io`, `cd/sat_store` and your `sat_boot_files[]` against SGL's libraries.
+1. Fill `ld/boot.ld.in`, link `boot/crt0.S`, `sat_boot*`, `sat_cart_soak`, `sat_diag`, `cd/sat_gfs_io`, `cd/sat_store` and your `sat_boot_files[]` against SGL's libraries.
 2. The loader shows the boot display from its first instruction, changes the clock, enables the cart, loads your files and jumps to `SAT_BOOT_ENTRY`.
 
 Runtime:
