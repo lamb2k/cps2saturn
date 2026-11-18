@@ -60,5 +60,21 @@ int main(void)
     sat_tc_frame(&c); uploads = 0;                                                                /* the next build: its own earlier tiles and the prefetched one are all hits */
     CHECK(sat_tc_get(&c, 600) == a); CHECK_EQ(uploads, 0);
     sat_tc_commit(&c); sat_tc_frame(&c); CHECK(sat_tc_get(&c, 800) != SAT_TC_NOSLOT);              /* the build after that may evict the prefetched tiles it did not use */
+    /* sat_tc_get_fast (lane slavecost): the same answers and the same cache effects as sat_tc_get, over a long random sequence with frames, commits and refusals, on two caches that start equal */
+    {
+        static uint8_t vram2[CAP * 8]; static SatTcSlot slots2[CAP]; static uint16_t head2[16]; static uint32_t neg2[16];
+        SatTileCache d; uint32_t x = 12345, n; unsigned j;
+        sat_tc_init(&c, vram, 8, CAP, 1, slots, head, 16, neg, 16, fetch, up, 0); c.protect_prev = 1;
+        sat_tc_init(&d, vram2, 8, CAP, 1, slots2, head2, 16, neg2, 16, fetch, up, 0); d.protect_prev = 1;
+        for (n = 0; n < 20000; n++) {
+            uint32_t k;
+            x = x * 1664525u + 1013904223u; k = (x >> 12) % 40u; if ((x >> 8) % 11u == 0) k += 1000u; if ((x >> 8) % 13u == 0) k += 2000u;
+            if ((x >> 20) % 17u == 0) { sat_tc_commit(&c); sat_tc_commit(&d); sat_tc_frame(&c); sat_tc_frame(&d); }
+            CHECK_EQ(sat_tc_get(&c, k), sat_tc_get_fast(&d, k));
+            CHECK_EQ(c.used, d.used); CHECK_EQ(c.hand, d.hand); CHECK_EQ(c.refused, d.refused); CHECK_EQ(c.missing, d.missing);
+        }
+        for (j = 0; j < CAP; j++) { CHECK_EQ(slots[j].key, slots2[j].key); CHECK_EQ(slots[j].stamp, slots2[j].stamp); CHECK_EQ(slots[j].next, slots2[j].next); }
+        for (j = 0; j < 16; j++) CHECK_EQ(head[j], head2[j]);
+    }
     PASS();
 }
