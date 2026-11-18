@@ -64,5 +64,9 @@ int main(void)
     sat_v1_vblank_ended(&v, 1); CHECK_EQ(v.shown, 1); CHECK_EQ(R(SAT_VDP1_FBCR), 3);
     sat_v1_set_hold(&v, 2); CHECK_EQ(sat_v1_plot(&v), 1); R(SAT_VDP1_FBCR) = 0;
     sat_v1_vblank_ended(&v, 1); CHECK_EQ(v.shown, 1); CHECK_EQ(v.gated, 1); sat_v1_vblank_ended(&v, 1); CHECK_EQ(v.shown, 2);
+    /* the clear polygon: polygon command, ECD and SPD, colour 0, corners (0,0) (351,0) (351,223) (0,223), 32 bytes, returns the next slot */
+    fresh(); c = sat_v1_clear(vram + 0x40, 352, 224); CHECK(c == vram + 0x60);
+    CHECK_EQ((vram[0x40] << 8) | vram[0x41], 0x0004); CHECK_EQ((vram[0x44] << 8) | vram[0x45], 0x00c0); CHECK_EQ((vram[0x46] << 8) | vram[0x47], 0);
+    CHECK_EQ((vram[0x50] << 8) | vram[0x51], 351); CHECK_EQ((vram[0x54] << 8) | vram[0x55], 351); CHECK_EQ((vram[0x56] << 8) | vram[0x57], 223); CHECK_EQ((vram[0x5a] << 8) | vram[0x5b], 223);
     PASS();
 }
