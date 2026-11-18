@@ -31,8 +31,11 @@ Rules that hold throughout:
 
 Work:
 - Audit the ROM set in the pinned MAME. Record set name, description, MAME build.
-- Fill `configs/<set>.yaml` (see `configs/avspu.example.yaml`).
-- Dump program and opcode spaces; build the merged image.
+- Fill `configs/<set>.yaml` (see `configs/avspu.example.yaml`; CPS-1 and CPS-Dash: `configs/cps1.example.yaml`).
+- Dump program and opcode spaces; build the merged image. CPS-1 and CPS-Dash have no opcode view: the program dump
+  is the whole image.
+- CPS-1 and CPS-Dash: set `game.board`; fill the game's CPS-B setup (`video.*`) and graphics mapper; prove them
+  with `tools/video_check.py` on frames where things move (see `docs/design/cps1-dash-boards.md`).
 - Find the game's debug features (hitbox display, info monitors, test menus).
 - List inputs (`tools/mame/list_inputs.lua`).
 - First golden: attract mode, a few thousand IRQs.
@@ -190,7 +193,9 @@ Humans judge looks, feel and pacing. Computers judge identity, memory headroom, 
 - [ ] Private repo for the game; this kit as reference. `.gitignore` blocks game material from the first commit.
 - [ ] Pin MAME; audit the set; record the build.
 - [ ] Pin the SH-2 toolchain, the Saturn library and the emulator build (with MCP bridge). Record versions.
-- [ ] Copy `configs/avspu.example.yaml` to `configs/<set>.yaml`; fill set name, ROM files, region sizes.
+- [ ] Copy `configs/avspu.example.yaml` (CPS-2) or `configs/cps1.example.yaml` (CPS-1, CPS-Dash) to
+      `configs/<set>.yaml`; fill set name, ROM files, region sizes, and `game.board`.
+- [ ] CPS-1: save the DIP settings once and point `paths.cfg_baseline` at them, so every run starts the same.
 - [ ] Find: IRQ entry and vector, work RAM and object RAM ranges, I/O ranges, input ports, stage word, round
       byte, clear flags, credit byte, health fields. Add each to the config as you find it.
 - [ ] Dump program and opcode spaces; build the merged image.

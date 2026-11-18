@@ -20,6 +20,14 @@ class GoldenRunTest(unittest.TestCase):
         self.assertIn("avspu", cmd)
         self.assertTrue(cmd[-1].endswith("golden.lua"))
 
+    def test_host_input_is_shut_out(self):
+        # Without this, keys held on the host (MAME's default P1 button 1 is Left Ctrl) reach the game and two runs
+        # of the same route differ. Seen on dino: one run read 0xffef at 0x800000 where the other read 0xffff.
+        cmd, _, _ = mame_golden_run.build(cfg.load(_util.EXAMPLE), "g1", pathlib.Path("work"), None, None, None,
+                                          False, 10)
+        for provider in ("-keyboardprovider", "-mouseprovider", "-joystickprovider", "-lightgunprovider"):
+            self.assertEqual(cmd[cmd.index(provider) + 1], "none", provider)
+
     def test_dry_run(self):
         f = io.StringIO()
         with redirect_stdout(f):
