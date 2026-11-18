@@ -50,6 +50,13 @@ emulators mostly don't, so a wrong pattern draws fine on PC and shows shifted or
 - Character read timing must be legal for where the name read sits.
 - With split banks, CPU access slots must be set in both banks, with a no-access slot before them.
 - Encode the rules as a build gate and as a check over a register-write trace, with tests that known-bad words fail.
+- Registers whose reset value is not 0 must not be zero filled. The coordinate increments ZMXIN0, ZMYIN0, ZMXIN1 and ZMYIN1
+  (0x78, 0x7c, 0x88, 0x8c) reset to 1.0: after a clock change that zero fills the register file, write them 1 again. A 0
+  steps the layer 0 dots a dot, so a strict emulator draws its first cell everywhere while a lenient one treats 0 as 1.0 and
+  hides it. The cycle check passed while a stage background was missing for this reason. `tools/vdp2_cycle_check.py` fails an
+  enabled NBG0 or NBG1 with a zero increment in a state or trace, `--scan-writers` fails a zoom register that the source only
+  ever writes 0 (and judges literal BGON values against the spec), and `--dump VRAM REGS` checks the pattern names of a real
+  state against the cell reads of their banks (a zero name or a name into a bank without cell reads is an error).
 - Don't patch an emulator to "reproduce" a fault you only guessed at.
 
 Avoid reduction where you can: a native 1:1 picture at 352 wide needs one name and one character read per layer and

@@ -127,6 +127,64 @@ class TraceTest(unittest.TestCase):
         self.assertEqual(bursts, 0)
 
 
+class ZoomIncrementTest(unittest.TestCase):
+    """ZMXIN/ZMXDN/ZMYIN/ZMYDN of an enabled NBG0 or NBG1: 0 is an error, the reset value 1.0 is not."""
+    SETUP = TraceTest.SETUP
+
+    def regs(self, **zoom):
+        r = {int(o, 16): int(v, 16) for o, v in self.SETUP}
+        r.update({o: int(w, 16) for o, w in zip(chk.CYC_OFFSETS, GOOD)})
+        r.update({int(k[1:], 16): v for k, v in zoom.items()})   # keys like r78 = value
+        return r
+
+    def errs(self, regs):
+        spec = {"layers": {"nbg0": {"cell_banks": ["A0"]}, "nbg1": {"cell_banks": ["A0"]}, "nbg2": {"cell_banks": ["A0"]}}}
+        return chk.judge_regs(regs, spec)[0]
+
+    def test_registers_never_written_keep_the_reset_value(self):
+        self.assertEqual(self.errs(self.regs()), [])
+
+    def test_one_to_one_written(self):
+        self.assertEqual(self.errs(self.regs(r78=1, r7a=0, r7c=1, r7e=0, r88=1, r8a=0, r8c=1, r8e=0)), [])
+
+    def test_a_zero_fill_is_an_error_per_register_and_layer(self):
+        e = self.errs(self.regs(r78=0, r7a=0, r7c=0, r7e=0, r88=0, r8a=0, r8c=0, r8e=0))
+        self.assertEqual(len(e), 4, e)
+        self.assertTrue(any("NBG0 horizontal" in x and "ZMXIN0" in x for x in e), e)
+        self.assertTrue(any("NBG0 vertical" in x for x in e), e)
+        self.assertTrue(any("NBG1 horizontal" in x for x in e), e)
+        self.assertTrue(any("NBG1 vertical" in x for x in e), e)
+
+    def test_only_the_horizontal_increment_of_nbg1(self):
+        e = self.errs(self.regs(r88=0, r8a=0))
+        self.assertEqual(len(e), 1, e)
+        self.assertIn("NBG1 horizontal", e[0])
+
+    def test_a_fraction_alone_is_not_zero(self):
+        self.assertEqual(self.errs(self.regs(r78=0, r7a=0x8000)), [])   # 0.5
+
+    def test_a_layer_that_is_off_is_not_judged_and_nbg2_has_no_increments(self):
+        r = self.regs(r78=0, r7c=0, r88=0, r8c=0)
+        r[chk.BGON] = 0x0004
+        self.assertEqual(self.errs(r), [])
+
+    def test_trace_replay_fails_on_a_zero_fill_and_passes_once_one_is_written(self):
+        spec = {"require_ramctl": 0x1300, "layers": {"nbg0": {"cell_banks": ["A0"]}, "nbg1": {"cell_banks": ["A0"]}, "nbg2": {"cell_banks": ["A0"]}}}
+        base = TraceTest().lines(GOOD)[:-1]
+        zero = [f"{200 + i} W16 25F800{o:02X} 0000" for i, o in enumerate(chk.ZOOM_REGS)]
+        fix = ["300 W16 25F80078 0001", "301 W16 25F8007C 0001", "302 W16 25F80088 0001", "303 W16 25F8008C 0001"]
+        bursts, states = chk.check_trace(base + zero + ["tick vblank"], spec)
+        bad = [v for v in states.values() if v[0]]
+        self.assertEqual(len(bad), 1)
+        self.assertIn("coordinate increment", bad[0][0][0])
+        bursts, states = chk.check_trace(base + zero + fix + ["tick vblank"], spec)
+        self.assertFalse(any(v[0] for v in states.values()), states)
+
+    def test_trace_keys_cover_the_increments(self):
+        for o in range(0x78, 0x90, 2):
+            self.assertIn(o, chk.TRACE_KEYS)
+
+
 class CliTest(unittest.TestCase):
     def test_exit_codes(self):
         with tempfile.TemporaryDirectory() as d:
