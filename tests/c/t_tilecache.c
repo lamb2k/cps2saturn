@@ -76,5 +76,46 @@ int main(void)
         for (j = 0; j < CAP; j++) { CHECK_EQ(slots[j].key, slots2[j].key); CHECK_EQ(slots[j].stamp, slots2[j].stamp); CHECK_EQ(slots[j].next, slots2[j].next); }
         for (j = 0; j < 16; j++) CHECK_EQ(head[j], head2[j]);
     }
+    /* decode ahead with a hold (lane spikes): a tile decoded for a pose a few pictures away survives the builds in between, the first picture that uses it ends the hold, and an expired hold ages normally.
+       With hold_span 0 (the default) nothing changes. */
+    {
+        uint16_t h1, h2, h3; unsigned q;
+        sat_tc_init(&c, vram, 8, CAP, 1, slots, head, 16, neg, 16, fetch, up, 0); c.protect_prev = 1; c.hold_span = 4;
+        sat_tc_frame(&c); CHECK(sat_tc_get(&c, 900) != SAT_TC_NOSLOT); sat_tc_commit(&c);
+        uploads = 0;
+        h1 = sat_tc_prefetch_hold(&c, 901, 3); CHECK(h1 != SAT_TC_NOSLOT); CHECK_EQ(uploads, 1); CHECK_EQ(slots[h1].stamp, (uint16_t)(c.stamp + 3));
+        h2 = sat_tc_prefetch_hold(&c, 902, 2); CHECK(h2 != SAT_TC_NOSLOT);
+        CHECK_EQ(sat_tc_prefetch_hold(&c, 901, 2), h1); CHECK_EQ(slots[h1].stamp, (uint16_t)(c.stamp + 3));   /* held longer already: kept */
+        CHECK_EQ(sat_tc_prefetch_hold(&c, 902, 4), h2); CHECK_EQ(slots[h2].stamp, (uint16_t)(c.stamp + 4));   /* a longer hold extends it */
+        CHECK_EQ(sat_tc_prefetch_hold(&c, 900, 3), slots[head[(900 ^ (900 >> 10)) & 15]].key == 900 ? head[(900 ^ (900 >> 10)) & 15] : 0); CHECK_EQ(slots[head[(900 ^ (900 >> 10)) & 15]].stamp, c.stamp);   /* this frame's slot keeps its stamp */
+        /* three builds that each want 5 new tiles: the 7 slots cannot hold everything, but the two held slots stay */
+        for (q = 0; q < 2; q++) {
+            sat_tc_frame(&c); for (i = 0; i < 4; i++) sat_tc_get(&c, 1100 - 1000 + 300 + 10 * q + i); sat_tc_commit(&c);
+            CHECK_EQ(slots[h1].key, 901); CHECK_EQ(slots[h2].key, 902);
+        }
+        sat_tc_frame(&c); uploads = 0;
+        CHECK_EQ(sat_tc_get(&c, 901), h1); CHECK_EQ(uploads, 0); CHECK_EQ(slots[h1].stamp, c.stamp);              /* a use ends the hold */
+        sat_tc_commit(&c);
+        for (q = 0; q < 6; q++) { sat_tc_frame(&c); for (i = 0; i < 5; i++) sat_tc_get(&c, 1300 - 1000 + 100 * q + i); sat_tc_commit(&c); }
+        CHECK(slots[h2].key != 902 || h2 == 0);                                                                  /* a hold that ran out is evicted like any slot */
+        /* hold_span 0: the rule is off, a "hold" stamp is ignored by the sweep (and sat_tc_prefetch_hold is a plain prefetch) */
+        sat_tc_init(&c, vram, 8, CAP, 1, slots, head, 16, neg, 16, fetch, up, 0); c.protect_prev = 1;
+        sat_tc_frame(&c); sat_tc_commit(&c);
+        h3 = sat_tc_prefetch_hold(&c, 950, 3); CHECK(h3 != SAT_TC_NOSLOT); CHECK_EQ(slots[h3].stamp, c.stamp);
+    }
+    /* lockstep with the plain functions when hold_span is 0: sat_tc_prefetch_hold == sat_tc_prefetch over a random sequence */
+    {
+        static uint8_t vram3[CAP * 8]; static SatTcSlot slots3[CAP]; static uint16_t head3[16]; static uint32_t neg3[16];
+        SatTileCache d; uint32_t x = 777, n; unsigned j;
+        sat_tc_init(&c, vram, 8, CAP, 1, slots, head, 16, neg, 16, fetch, up, 0); c.protect_prev = 1;
+        sat_tc_init(&d, vram3, 8, CAP, 1, slots3, head3, 16, neg3, 16, fetch, up, 0); d.protect_prev = 1;
+        for (n = 0; n < 20000; n++) {
+            uint32_t k; x = x * 1664525u + 1013904223u; k = (x >> 12) % 40u; if ((x >> 8) % 11u == 0) k += 1000u; if ((x >> 8) % 13u == 0) k += 2000u;
+            if ((x >> 20) % 17u == 0) { sat_tc_commit(&c); sat_tc_commit(&d); sat_tc_frame(&c); sat_tc_frame(&d); }
+            if ((x >> 6) % 3u == 0) CHECK_EQ(sat_tc_prefetch(&c, k), sat_tc_prefetch_hold(&d, k, 5)); else CHECK_EQ(sat_tc_get(&c, k), sat_tc_get(&d, k));
+            CHECK_EQ(c.used, d.used); CHECK_EQ(c.hand, d.hand); CHECK_EQ(c.refused, d.refused);
+        }
+        for (j = 0; j < CAP; j++) { CHECK_EQ(slots[j].key, slots3[j].key); CHECK_EQ(slots[j].stamp, slots3[j].stamp); }
+    }
     PASS();
 }
