@@ -42,6 +42,7 @@ typedef struct SatTileCache {
     uint16_t hmask;           /* hash heads - 1, a power of two minus one */
     uint32_t *neg;            /* negative cache, entries of tag = key << 1 | missing; NULL for none */
     uint32_t neg_mask;        /* entries - 1 */
+    uint32_t *evict[2];       /* optional (NULL none; lane route60): bitmaps of capacity bits; a slot given to another key sets its bit in both, so a caller that kept slot numbers can tell they still hold their key */
     uint32_t memo_key[2];
     uint16_t memo_slot[2];
     int (*fetch)(void *ctx, uint32_t key, const uint8_t **payload);
@@ -50,6 +51,8 @@ typedef struct SatTileCache {
     uint32_t uploads;         /* this frame */
     uint32_t missing;         /* keys the pack lacked, cumulative */
     uint32_t refused;         /* capacity refusals, cumulative */
+    uint16_t hold_span;       /* decode ahead with a hold (lane spikes): a slot whose stamp is 1 to hold_span frames in the future is not evicted; 0 (the default) turns the rule off */
+    uint32_t held_hits;       /* -DSAT_TC_HOLDSTAT builds only: first touches of a picture that found a held slot, cumulative */
 } SatTileCache;
 
 void sat_tc_init(SatTileCache *c, uint8_t *vram, uint32_t slot_bytes, uint16_t capacity, uint16_t first,
@@ -59,6 +62,43 @@ void sat_tc_init(SatTileCache *c, uint8_t *vram, uint32_t slot_bytes, uint16_t c
 void sat_tc_frame(SatTileCache *c);
 /* Slot number for key, uploading on a miss. SAT_TC_NOSLOT for blank, missing or refused. */
 uint16_t sat_tc_get(SatTileCache *c, uint32_t key);
+/* Same result and same effects as sat_tc_get, with the hit that sat_tc_get takes most often (the memo, or the first slot of the hash chain) done in the caller without a call (lane slavecost: a picture asks for 300 to
+   400 tiles, nearly all are in the cache, and the call with its register saves was a third of a hit). Anything else goes to sat_tc_get. -DSAT_TC_NOFAST makes it a plain call. */
+#ifndef SAT_TC_NOFAST
+static inline uint16_t sat_tc_get_fast(SatTileCache *c, uint32_t key)
+{
+    uint32_t way = key & 1;
+    if (c->memo_key[way] == key) return c->memo_slot[way];
+    {
+        uint16_t s = c->head[(key ^ (key >> 10)) & c->hmask];
+        if (s != SAT_TC_NOSLOT) {
+            SatTcSlot *r = &c->slots[s];
+            if (r->key == key) {
+                if (r->stamp != c->stamp) {
+#ifdef SAT_TC_HOLDSTAT
+                    if ((uint16_t)((uint16_t)(r->stamp - c->stamp) - 1u) < c->hold_span) c->held_hits++;
+#endif
+                    r->stamp = c->stamp; c->used++;
+                }
+                c->memo_key[way] = key; c->memo_slot[way] = s;
+                return s;
+            }
+        }
+    }
+    return sat_tc_get(c, key);
+}
+#else
+#define sat_tc_get_fast sat_tc_get
+#endif
+/* Decode ahead (lane cadence): the same lookup as sat_tc_get, called between two builds, for a tile a coming picture will probably need. A miss decodes and uploads it into a slot
+   that neither the build just submitted nor the picture before it uses, and stamps it as the submitted build's, so the next build's sweep leaves it alone. No memo is touched.
+   Call it only after sat_tc_commit of a build that was plotted, before the next sat_tc_frame. SAT_TC_NOSLOT for blank, missing or refused. */
+uint16_t sat_tc_prefetch(SatTileCache *c, uint32_t key);
+/* Decode ahead for a tile that is needed `hold` pictures from now or sooner (lane spikes, 1 <= hold <= hold_span; the caller sets c->hold_span once). The same lookup as sat_tc_prefetch, but the slot (found or
+   new) is stamped `hold` frames in the future instead of the current frame: the clock sweep skips a slot stamped 1 to hold_span frames ahead, so a tile decoded for a pose that starts a few pictures
+   from now survives the builds in between; the first picture that uses it restamps it as any hit does (the hold ends), and when its time has passed it ages like any other slot. A slot that the last submitted
+   plot or this build already stamped (the stamp is the current one) keeps its stamp, and a slot held longer keeps its hold. Same call rules as sat_tc_prefetch. SAT_TC_NOSLOT for blank, missing or refused. */
+uint16_t sat_tc_prefetch_hold(SatTileCache *c, uint32_t key, uint16_t hold);
 /* VRAM address of a slot. */
 static inline uint8_t *sat_tc_slot_addr(const SatTileCache *c, uint16_t slot) { return c->vram + (uint32_t)slot * c->slot_bytes; }
 /* The plot of this build was submitted: its slots are now the previous plot's. */

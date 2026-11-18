@@ -22,9 +22,10 @@ void sat_tc_init(SatTileCache *c, uint8_t *vram, uint32_t slot_bytes, uint16_t c
     c->slots = slots; c->head = head; c->hmask = (uint16_t)(head_count - 1);
     c->neg = neg; c->neg_mask = neg_count ? neg_count - 1 : 0;
     c->fetch = fetch; c->upload = upload; c->ctx = ctx;
-    c->uploads = 0; c->missing = 0; c->refused = 0;
+    c->uploads = 0; c->missing = 0; c->refused = 0; c->hold_span = 0; c->held_hits = 0;
     for (i = 0; i < capacity; i++) { slots[i].key = SAT_TC_NOKEY; slots[i].stamp = 0; slots[i].next = SAT_TC_NOSLOT; }
     for (i = 0; i < head_count; i++) head[i] = SAT_TC_NOSLOT;
+    c->evict[0] = c->evict[1] = 0;
     c->memo_key[0] = c->memo_key[1] = SAT_TC_NOKEY;
     c->memo_slot[0] = c->memo_slot[1] = SAT_TC_NOSLOT;
     sat_tc_forget_negative(c);
@@ -49,7 +50,10 @@ void sat_tc_abandon(SatTileCache *c)
         if (c->slots[i].stamp == c->stamp) c->slots[i].stamp = c->prev_stamp;
 }
 
-static uint16_t tc_find(SatTileCache *c, uint32_t key)
+/* stamp value `hold` frames ahead of the current one */
+static inline uint16_t tc_ahead(const SatTileCache *c, uint16_t hold) { return (uint16_t)(c->stamp + hold); }
+/* hold 0: a normal lookup (sat_tc_get, sat_tc_prefetch); hold > 0: decode ahead with a hold (sat_tc_prefetch_hold) */
+static uint16_t tc_find(SatTileCache *c, uint32_t key, uint16_t hold)
 {
     uint32_t h = HASH(c, key), way = 0, tag = 0;
     uint16_t s = c->head[h], n = SAT_TC_NOSLOT;
@@ -59,7 +63,17 @@ static uint16_t tc_find(SatTileCache *c, uint32_t key)
     while (s != SAT_TC_NOSLOT) {
         SatTcSlot *r = &c->slots[s];
         if (r->key == key) {
-            if (r->stamp != c->stamp) { r->stamp = c->stamp; c->used++; }
+            if (!hold) {
+                if (r->stamp != c->stamp) {
+#ifdef SAT_TC_HOLDSTAT
+                    if ((uint16_t)((uint16_t)(r->stamp - c->stamp) - 1u) < c->hold_span) c->held_hits++;
+#endif
+                    r->stamp = c->stamp; c->used++;
+                }
+            } else {
+                uint16_t d = (uint16_t)(r->stamp - c->stamp);
+                if (d != 0 && (d > c->hold_span || d < hold)) r->stamp = tc_ahead(c, hold);   /* not this frame's, and not held longer already */
+            }
             return s;
         }
         s = r->next;
@@ -78,7 +92,8 @@ static uint16_t tc_find(SatTileCache *c, uint32_t key)
     for (scan = c->first; scan < c->capacity; scan++) {
         uint16_t t = c->hand;
         c->hand = (uint16_t)(t + 1u >= c->capacity ? c->first : t + 1u);
-        if (c->slots[t].stamp != c->stamp && !(c->protect_prev && c->prev_stamp && c->slots[t].stamp == c->prev_stamp)) { n = t; break; }
+        if (c->slots[t].stamp != c->stamp && !(c->protect_prev && c->prev_stamp && c->slots[t].stamp == c->prev_stamp)
+            && (uint16_t)((uint16_t)(c->slots[t].stamp - c->stamp) - 1u) >= c->hold_span) { n = t; break; }
     }
     if (n == SAT_TC_NOSLOT) { c->refused++; return SAT_TC_NOSLOT; }
     if (c->slots[n].key != SAT_TC_NOKEY) {
@@ -86,7 +101,9 @@ static uint16_t tc_find(SatTileCache *c, uint32_t key)
         while (*link != n) link = &c->slots[*link].next;
         *link = c->slots[n].next;
     }
-    c->slots[n].key = key; c->slots[n].stamp = c->stamp; c->used++;
+    if (c->evict[0]) { uint32_t b = 1u << (n & 31); c->evict[0][n >> 5] |= b; c->evict[1][n >> 5] |= b; }
+    c->slots[n].key = key;
+    if (hold) c->slots[n].stamp = tc_ahead(c, hold); else { c->slots[n].stamp = c->stamp; c->used++; }
     c->slots[n].next = c->head[h]; c->head[h] = n;
     c->upload(sat_tc_slot_addr(c, n), payload, c->slot_bytes);
     c->uploads++;
@@ -98,7 +115,19 @@ uint16_t sat_tc_get(SatTileCache *c, uint32_t key)
     uint32_t way = key & 1;
     if (c->memo_key[way] != key) {
         c->memo_key[way] = key;
-        c->memo_slot[way] = tc_find(c, key);
+        c->memo_slot[way] = tc_find(c, key, 0);
     }
     return c->memo_slot[way];
+}
+
+uint16_t sat_tc_prefetch(SatTileCache *c, uint32_t key)
+{
+    /* Between builds c->stamp is the stamp of the last submitted plot (sat_tc_commit made it prev_stamp), so tc_find neither evicts its slots nor the ones it just stamped; a hit restamps. */
+    return tc_find(c, key, 0);
+}
+
+uint16_t sat_tc_prefetch_hold(SatTileCache *c, uint32_t key, uint16_t hold)
+{
+    if (hold > c->hold_span) hold = c->hold_span;
+    return tc_find(c, key, hold);   /* hold 0 (hold_span 0, rule off) is a plain prefetch */
 }
