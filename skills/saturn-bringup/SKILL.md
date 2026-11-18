@@ -16,7 +16,9 @@ clean, and plan the first hardware discs as diagnostic tools, not as releases.
 - **Rule out the disc first.** Boot a known-good homebrew disc from the same drive (optical drive emulator or burned
   CD) before blaming the program. Check IP.BIN fields and the first-read size (see `saturn-packaging`).
 - **Static gates that catch what emulators don't** (all cheap, all in the build):
-  - VDP2 VRAM access-cycle check (below), `tools/vdp2_cycle_check.py`.
+  - VDP2 VRAM access-cycle check (below), `tools/vdp2_cycle_check.py`. Add its writer scan
+    (`--scan-writers saturn --allow tools/vdp2_writers_allow.txt`): a diagnostic or special screen that writes the
+    cycle registers with its own numbers is never judged by the rules, so each such write is listed with a reason.
   - Alignment gate: every 16/32-bit data symbol, pointer-cast site and on-disc structure aligned,
     `tools/align_gate.py`, with a reviewed list of cast sites.
   - Display-register latch model (see `saturn-graphics`), `tools/latch_model.py`.
