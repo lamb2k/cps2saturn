@@ -39,6 +39,21 @@ void sat_v1_init(SatVdp1 *v, volatile uint8_t *vram, volatile uint16_t *regs, ui
 }
 
 volatile uint8_t *sat_v1_cmd(SatVdp1 *v) { return v->vram + v->table[v->cur] + SAT_V1_FIRST_CMD; }
+volatile uint8_t *sat_v1_clear(volatile uint8_t *cmd, unsigned w, unsigned h)
+{
+    unsigned i;
+    W16(cmd + 0, 0x0004);                  /* polygon, next command follows */
+    W16(cmd + 2, 0);
+    W16(cmd + 4, 0x00c0);                  /* ECD and SPD: colour 0 is written, not skipped */
+    W16(cmd + 6, 0);                       /* colour 0 = clear in the sprite types that treat 0 as transparent */
+    for (i = 8; i < 12; i += 2) W16(cmd + i, 0);
+    W16(cmd + 12, 0); W16(cmd + 14, 0);                    /* A (0, 0) */
+    W16(cmd + 16, w - 1); W16(cmd + 18, 0);                /* B (w-1, 0) */
+    W16(cmd + 20, w - 1); W16(cmd + 22, h - 1);            /* C (w-1, h-1) */
+    W16(cmd + 24, 0); W16(cmd + 26, h - 1);                /* D (0, h-1) */
+    W16(cmd + 28, 0); W16(cmd + 30, 0);
+    return cmd + SAT_V1_CMD_BYTES;
+}
 void sat_v1_end(SatVdp1 *v, volatile uint8_t *after_last) { (void)v; W16(after_last, SAT_V1_END_CODE); }
 
 void sat_v1_set_hold(SatVdp1 *v, uint32_t vblanks) { UNC(v->hold_min) = vblanks < 1u ? 1u : vblanks; }

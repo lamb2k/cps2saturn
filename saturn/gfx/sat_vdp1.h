@@ -60,6 +60,10 @@ void sat_v1_init(SatVdp1 *v, volatile uint8_t *vram, volatile uint16_t *regs, ui
 /* VRAM address of the first sprite command of the table being built. The caller writes commands from there and ends the list with sat_v1_end(). */
 volatile uint8_t *sat_v1_cmd(SatVdp1 *v);
 void sat_v1_end(SatVdp1 *v, volatile uint8_t *after_last);
+/* Writes a full-picture clear polygon (colour 0, ECD and SPD set) at `cmd` and returns the next command address. Put it first in every list that does not cover the whole
+   picture: the change in sat_v1_vblank (FBCR 3, manual change, TVMR VBE off) does not erase the new draw buffer on the emulator tested (Yabasanshiro: sprites of every earlier
+   picture piled up, MvC Saturn 2026-11-16), and AvP's default does the same polygon. The hardware erase (VBE with the erase registers) is a different path and is not used here. */
+volatile uint8_t *sat_v1_clear(volatile uint8_t *cmd, unsigned w, unsigned h);
 
 /* Fewest vblanks a picture is shown for (1 or 2): written by the master at the hand-off point, read by the vblank hook. */
 void sat_v1_set_hold(SatVdp1 *v, uint32_t vblanks);
