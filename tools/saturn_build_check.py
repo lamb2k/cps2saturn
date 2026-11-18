@@ -107,7 +107,7 @@ def link_images(gcc, env, out_dir, base):
     # loader: crt0 first, GFS stubbed
     boot = out_dir / "boot.ld"
     boot.write_text(fill(ld / "boot.ld.in", {"LOADER_BASE": "0x06004000", "LOADER_STACK": "4096"}))
-    rc, text, mp = link_one(gcc, env, out_dir, "loader", [o(n) for n in ("crt0", "sat_diag", "sat_boot", "sat_boot_main", "sat_store", "sat_gfs_io", "link_stubs_loader")], boot)
+    rc, text, mp = link_one(gcc, env, out_dir, "loader", [o(n) for n in ("crt0", "sat_diag", "sat_boot", "sat_cart_soak", "sat_boot_main", "sat_store", "sat_gfs_io", "link_stubs_loader")], boot)
     start = map_symbol(mp, "_sat_crt0")
     top = map_symbol(mp, "_sat_boot_sp")
     if not rc and top is not None and top > 0x06013fa0:

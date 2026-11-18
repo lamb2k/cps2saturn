@@ -8,13 +8,15 @@
  *   2. sat_boot_cart_enable()   enable and verify the cart on the BIOS's own timing, then switch to a faster timing and verify again,
  *                               falling back to the BIOS timing if that fails. Stops with a coded failure on the boot display if no RAM answers.
  *   3. file loads (sat_gfs_io.h), then enter the runtime (sat_boot_enter()).
+ * The faster timing has to pass the soak test (sat_cart_soak.h: 256 KB, four bit patterns, read back through the cache as the game reads it), not
+ * just two words. A SAROO keeps its own timing and is left alone (SAT_CART_SAROO_ASR0). SAT_CART_BIOS_TIMING never tries the faster timing.
  * Failure codes shown on the stripes: 0xe0f0 cart did not answer, 0xe0f2 no 4 MB cart ID either, 0xe0f1 only the BIOS timing works and it
  * failed on the way back. A yellow band (stage colour) with 0x2001 means only the BIOS timing worked, not the faster one. */
 #ifndef SAT_BOOT_H
 #define SAT_BOOT_H
 #include "sat_diag.h"
 
-/* Returns nonzero if only the BIOS timing worked. Calls sat_diag_fail() if the cart does not answer at all. */
+/* Returns nonzero if only the BIOS timing worked (the faster timing failed the soak test). Calls sat_diag_fail() if the cart does not answer at all. */
 int sat_boot_cart_enable(void);
 void sat_boot_clock_change(void);                  /* SAT_BOOT_CLOCK_28 selects the 352 wide clock; also rewrites VDP2 registers to zero as SGL does */
 void sat_boot_spin(unsigned long n);

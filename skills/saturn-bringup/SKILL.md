@@ -62,7 +62,13 @@ leaves CPU slots open. Make it the first console control before trying a scaled 
 - Hardware RAM is not zeroed at power-up. Test with randomised RAM contents in the emulator.
 - Add read-back self-tests at boot (CRAM, VDP RAM, SCSP volume) behind a test switch. Remove them from release
   builds.
-- Keep cart timing on a conservative setting, with a fallback if a verify read fails.
+- Keep cart timing on a conservative setting, with a fallback if a verify read fails. Two words read back once is not
+  enough: a Fenrir passed that and still showed speckled menus and garbled sprites at the faster A-bus timing, with
+  nothing wrong in any emulator (HARDWARE). Gate the faster timing on a soak test (`sat_boot_cart_soak`: 256 KB, four
+  bit patterns, read back through the cache as the game reads) and fall back to the BIOS timing, with a band and an info
+  code so a photo shows which one ran.
+- A SAROO keeps its own cart timing (ASR0 0x38803880 after the BIOS clock change). Do not overwrite it with the BIOS or
+  the faster timing; `sat_boot_cart_enable()` leaves it alone when it sees that value.
 - A sound start can fail on a cold boot: retry it a bounded number of times.
 
 ## Overscan

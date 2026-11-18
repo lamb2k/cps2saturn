@@ -49,6 +49,15 @@
 #ifndef SAT_CART_OURS_AREF
 #define SAT_CART_OURS_AREF 0x00000013u
 #endif
+#ifndef SAT_CART_SOAK_BASE
+#define SAT_CART_SOAK_BASE 0x02700000u     /* cached address of the cart area the timing soak test overwrites: nothing may be loaded there yet (the cart is a 4 MB window at 0x02400000) */
+#endif
+#ifndef SAT_CART_SOAK_WORDS
+#define SAT_CART_SOAK_WORDS 0x4000u        /* 32 bit words in each soak block (64 KB); four blocks, one per bit pattern, so 256 KB in all */
+#endif
+#ifndef SAT_CART_SAROO_ASR0
+#define SAT_CART_SAROO_ASR0 0x38803880u    /* the A-bus timing a SAROO leaves after the BIOS clock change: it keeps its own timing, the loader must not rewrite it */
+#endif
 
 /* ---- hand-off (saturn/rt/sat_sync) ---- */
 #ifndef SAT_SLAVE_STACK_WORDS

@@ -28,7 +28,7 @@ legal review. This kit gives you no rights in any game.
 
 | Files | Licence | Why |
 | --- | --- | --- |
-| `saturn/**` | MIT ([LICENSE](LICENSE)) | Moved from AvP Saturn (`avpsaturn` v0.1.0-beta) with the owner's approval; each file header names its source. No code from GPL projects. `saturn/cd/sat_lzdec.h` follows the method of `puff.c` (zlib licence), credited below. |
+| `saturn/**` | MIT ([LICENSE](LICENSE)) | Moved from AvP Saturn (`avpsaturn` v0.1.0-beta, and later pieces from its `release/v0.1.2-beta`) with the owner's approval; each file header names its source. No code from GPL projects. `saturn/cd/sat_lzdec.h` follows the method of `puff.c` (zlib licence), credited below. |
 | `tools/**/*.py`, `tools/**/*.lua`, `tests/**` | MIT ([LICENSE](LICENSE)) | Written for the AvP Saturn project and generalised here, or written for the kit. No code copied from MAME, Yabasanshiro or any other GPL project. The CPS-1 / CPS-Dash behaviour in `tools/cps_objects.py`, `tools/cps_tiles.py` (mapper) and `tools/cps_video.py` was written from reading MAME's CPS-1 driver (`src/mame/capcom/cps1*.cpp`, BSD-3-Clause, Paul Leaman and the MAME team): the behaviour is described and re-implemented; no code and no per-game tables are copied. |
 | `skills/**`, `playbook/**`, `configs/**`, top-level docs | MIT ([LICENSE](LICENSE)) | Our own writing. |
 

@@ -55,6 +55,9 @@ class ModuleScenarioTests(unittest.TestCase):
     def test_tilecache(self):
         self.scenario("t_tilecache", "saturn/gfx/sat_tilecache.c")
 
+    def test_cart_soak(self):
+        self.scenario("t_soak", "saturn/boot/sat_cart_soak.c")
+
     def test_vdp1_plot_protocol(self):
         self.scenario("t_vdp1", "saturn/gfx/sat_vdp1.c")
 
