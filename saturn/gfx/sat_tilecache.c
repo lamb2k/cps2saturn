@@ -25,6 +25,7 @@ void sat_tc_init(SatTileCache *c, uint8_t *vram, uint32_t slot_bytes, uint16_t c
     c->uploads = 0; c->missing = 0; c->refused = 0; c->hold_span = 0; c->held_hits = 0;
     for (i = 0; i < capacity; i++) { slots[i].key = SAT_TC_NOKEY; slots[i].stamp = 0; slots[i].next = SAT_TC_NOSLOT; }
     for (i = 0; i < head_count; i++) head[i] = SAT_TC_NOSLOT;
+    c->evict[0] = c->evict[1] = 0;
     c->memo_key[0] = c->memo_key[1] = SAT_TC_NOKEY;
     c->memo_slot[0] = c->memo_slot[1] = SAT_TC_NOSLOT;
     sat_tc_forget_negative(c);
@@ -100,6 +101,7 @@ static uint16_t tc_find(SatTileCache *c, uint32_t key, uint16_t hold)
         while (*link != n) link = &c->slots[*link].next;
         *link = c->slots[n].next;
     }
+    if (c->evict[0]) { uint32_t b = 1u << (n & 31); c->evict[0][n >> 5] |= b; c->evict[1][n >> 5] |= b; }
     c->slots[n].key = key;
     if (hold) c->slots[n].stamp = tc_ahead(c, hold); else { c->slots[n].stamp = c->stamp; c->used++; }
     c->slots[n].next = c->head[h]; c->head[h] = n;
