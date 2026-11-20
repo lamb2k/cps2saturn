@@ -21,7 +21,7 @@ description: Checklist of working rules for CPS2-to-Saturn ports. Use before lan
       quick tests only and are never packaged. Debug readouts, profilers, self-tests and logs are compile-time
       switches, off in every release recipe. Never hide one with a memory poke or a crop.
 - [ ] **No landed-but-off switches without a reason.** Keep a list of every landed switch that is neither on in the
-      release recipe nor parked with a reason and an owner. Move each forward or park it.
+      release recipe nor parked with a reason, an owner and a date. Move each forward, park it, or delete the code.
 - [ ] **Quit and restart undo every runtime patch.** Dump patched tables after several restarts: 0 bytes differ.
 
 ## Measuring
@@ -29,6 +29,17 @@ description: Checklist of working rules for CPS2-to-Saturn ports. Use before lan
 - [ ] **Measure before optimising.** Profile the real image on a fixed build and scene. One variable at a time.
       Mean and tail (p95, max), whole frame, not only the target function.
 - [ ] Roll back if p95 rises or the cost just moves elsewhere.
+- [ ] **Build the measurement before the work.** A fixed benchmark scene that plays the same on every build (input
+      keyed by the game's own tick, opponent and random state pinned) comes before the first speed lane. Without
+      it the opponent's choices follow the layout and the load timing, and real cuts read as noise.
+- [ ] **A whole-frame budget picks the work.** Work per game tick per scene against the cycles in a frame, biggest
+      row first. Each change names its row and the gain it expects.
+- [ ] **An unexplained gap is a task.** When two measurements that should agree do not (benchmark against normal
+      play, model against console), find out why before anything else. Such a gap hid one port's biggest gain.
+- [ ] **Three runs for a decision,** with the spread. Layout and load timing move a figure by 1 to 3 percent; one
+      run inside that is "indicative", not a result.
+- [ ] **A control plays the same scene.** Key switches and memory pokes by game tick, never by wall clock, and show
+      that both arms reached the same state (same picks, same stage, same start frame).
 - [ ] **Savings are hypotheses** until measured. Check what the build already has before calling something untried.
 - [ ] Label every number: HOST, MAME, EMULATOR, MODELLED, ASSUMED, HARDWARE (CONSOLE).
 - [ ] Record build, commit, scene, window, flags, emulator copy and settings, and asset path with every comparison.
@@ -90,9 +101,12 @@ description: Checklist of working rules for CPS2-to-Saturn ports. Use before lan
 
 ## Safety
 
-- [ ] `${VAR:?}` on every `rm` with a variable. Own scratch folder per lane.
-- [ ] No global input. Kill only processes you started, matched by their full command line or pid, never by
-      name (`pkill -f`, `taskkill /im`). See `emulator-testing` for emulator claims and file backups.
+- [ ] `${VAR:?}` on every `rm` with a variable, or literal absolute paths where the agent tool refuses a variable.
+      Own scratch folder per lane.
+- [ ] No global input. Stop only processes you started, by the pid you logged at launch, after checking name and
+      start time, never by name (`pkill -f`, `taskkill /im`). See `emulator-testing` for emulator claims and
+      file backups.
+- [ ] A refused tool call is reported, not rewritten into a form that passes.
 - [ ] Outward-facing steps (publish, host, post) need the owner's OK unless a standing rule covers them.
 
 ## Release

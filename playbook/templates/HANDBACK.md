@@ -22,6 +22,14 @@ released <no / version>.
 
 Image: <file> sha256 <hash>, build flags <flags>, emulator copy and settings <name, patches, profile>.
 
+Runs per figure: <n; three for anything that decides a default, with the spread>.
+Controls: <for each A/B or gate, the evidence that both arms played the same scene, and the check that can fail>.
+Budget line: <row, gain expected in the brief, gain measured>.
+
+## Premises checked
+
+- <each premise of the brief: held / wrong, and what was measured>
+
 ## Staging and assists
 
 - <anything that helped the run or the capture: health held, memory writes, settings changed, frames cut; or none>
@@ -47,4 +55,5 @@ Image: <file> sha256 <hash>, build flags <flags>, emulator copy and settings <na
 ## Housekeeping
 
 - Intermediate images deleted: <yes, manifest path / no, why>
-- Emulator processes left running: <none / pid and command>
+- Processes left running: <none, checked by pid against the lane's log / pid, command and the time it ends>
+- Traps found, and where they were written down: <lane rules section / none>

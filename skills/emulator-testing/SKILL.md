@@ -75,6 +75,17 @@ Most checks should take a minute or two. Long runs drift (Yaba slowed from ~60 t
 some scenes; a fresh process restores speed). Join long routes as legs with save states, and say so. Bound every
 run with a timeout and kill only the processes your run started.
 
+## A/B runs and controls
+
+- Both arms play the same scene. Key every poke and switch to the game's frame or tick counter, never to wall
+  clock: emulators run at different speeds from run to run, so "after two seconds" is a different game frame each
+  time. Report the evidence that both arms matched (picks, stage, the frame the fight started).
+- A counter that reads differently between two runs of one image (a missing-tile count of 0 and then 370) is not a
+  result for either arm. Run each arm at least twice before comparing.
+- Three runs, or three boot delays, for any figure that decides a default. Give the spread.
+- Give every run a time limit of its own. A run that hangs (a route stuck at a menu) otherwise holds an emulator
+  slot until someone notices. Write the routes and settings that hang into the lane rules.
+
 ## What a run reports
 
 Image hash, build flags, route or script, start and end vblank, fatals (code, PC), missing-tile counter, loads,

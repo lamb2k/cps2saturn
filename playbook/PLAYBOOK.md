@@ -156,7 +156,8 @@ Run as many lanes as have clear, non-overlapping deliverables. Cap how many run 
 ### Writing the brief
 
 Use `templates/LANE-BRIEF.md`. Point at files rather than retyping them. Name the gates. Put the safety lines
-in every brief. State the end point.
+in every brief. State the end point. Mark what the brief assumes as unproven, name the budget line the lane moves,
+and keep a lane to one question of about three hours (`skills/agent-orchestration`).
 
 ### Landing
 
@@ -289,6 +290,21 @@ ending on the emulator, home modes. What it taught:
     pokes. Readouts are compile-time switches, off in the release recipe, and media comes from the release disc.
 21. **Branches drifted.** The default branch sat 600 commits behind the shipped source, and release notes were
     drafted for a build two weeks older than the one shipping. Check what each candidate holds before writing.
+
+### From a second port: four days of speed work
+
+About 60 lanes took a second CPS2 game from 4 to 26 game ticks a second to 52 to 59 (MODELLED, console unrun).
+What the retrospective kept:
+
+1. **One honest speed number first.** A day went to "ticks" that were vblank cadence. Use the game's own counter.
+2. **The big steps were corrections of where the time goes,** not faster code: a wait test, masked disc reads
+   taken for slave waits, and ticks lost to an early interrupt (`skills/saturn-perf`).
+3. **A fixed benchmark before speed lanes.** Without it five real cuts read as noise.
+4. **A frame budget picks the next lane.** Habit picked four lanes for a 3 to 5 percent item first.
+5. **A failed gate is a claim too.** One came from a control that played a different fight.
+6. **Briefs carry guesses.** Mark them, and have the lane check them first.
+7. **Short lanes that end clean,** one on speed and one on correctness, on a machine whose caps are agreed.
+8. **Nothing replaces the console.** Every figure above is a model until a photo of the readout says otherwise.
 
 ## 8. Templates
 
