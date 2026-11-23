@@ -291,6 +291,31 @@ ending on the emulator, home modes. What it taught:
 21. **Branches drifted.** The default branch sat 600 commits behind the shipped source, and release notes were
     drafted for a build two weeks older than the one shipping. Check what each candidate holds before writing.
 
+### From the v0.1.3 beta fixes
+
+These lessons come from the shipped AvP beta and its headless regression checks. The earlier WASCA boot failure
+was reported on a physical Saturn. The new boot path still needs a retest on that setup.
+
+1. **Keep boot failures specific.** Record the build, loader step, error detail, compressed block and bytes read.
+   Compare normal and safe cartridge timing with the same game data and firmware. If both stop at the same block,
+   decode the shipped file offline and try a direct-load image with a cartridge RAM readback checksum. The direct
+   load changes the read path and disc layout. Confirm the result on the reporting setup before attributing a
+   failure to the download, cartridge or decoder. [WASCA boot report](https://github.com/lamb2k/avpsaturn/issues/3)
+2. **Check the hit and the bank together.** Match the arcade sound command to actual enemy damage, then replay
+   the same move in the Saturn stage, character and co-op combination. Count effect starts, channel refusals and
+   missing commands separately. Match the recorded SCSP output to the intended clip. Budget the command table
+   and PCM independently, and keep sample aliases within their stored spans.
+   [Predator hit audio report](https://github.com/lamb2k/avpsaturn/issues/2)
+3. **Check tile ownership and layer priority at their sources.** Reserve stock animation keys before remapping
+   guest sprites. Verify the affected poses in the VDP1 commands and the rendered output, solo and with the guest
+   active. For scenery layering, compare arcade and Saturn output at the same camera position before, during and
+   after pause. [Warrior grab report](https://github.com/lamb2k/avpsaturn/issues/4) ·
+   [Razor Claws layering report](https://github.com/lamb2k/avpsaturn/issues/5)
+4. **Replay the exact move on the exact boss.** Record the task and interrupted game address at a freeze and
+   check that the lifted dispatch table includes the original target. Use pad input to land the reported move
+   on the boss, verify its damage and rebound, and check that gameplay continues. Run a separate boss clear
+   through the next stage load. [Razor Claws freeze report](https://github.com/lamb2k/avpsaturn/issues/6)
+
 ### From a second port: four days of speed work
 
 About 60 lanes took a second CPS2 game from 4 to 26 game ticks a second to 52 to 59 (MODELLED, console unrun).
