@@ -306,6 +306,14 @@ What the retrospective kept:
 7. **Short lanes that end clean,** one on speed and one on correctness, on a machine whose caps are agreed.
 8. **Nothing replaces the console.** Every figure above is a model until a photo of the readout says otherwise.
 
+### What the follow-up checks caught
+
+- **Count matched runs by route and boot delay.** Record both builds, team picks, stage and the game tick at fight start. Compare fighter state, RNG and work RAM at the same delivered game ticks. A placement change matched at every shared checkpoint in ten benchmark pairs, but two routes had only one pair each. Report that coverage explicitly. In normal play, a longer load can shift input timing even with the same pad script.
+- **Trace a faster lookup against the plain search.** Have a diagnostic build compare each result with the original search and count comparisons and mismatches. Deliberately corrupt one cache fill and verify that the checker trips. In one five-route emulator check, more than three million reads agreed and the injected error was caught. For the speed claim, measure the lookup's cost again with the checker disabled.
+- **Charge a fast kernel for the whole call.** Count how often the game calls it, how much work each call accepts, and how often it falls back. Include argument setup and the fallback check in the comparison. One exact kernel ran slower in a fight because many calls did too little work to repay the setup. For hot code copies, also compare against spending the same fast RAM on ordinary resident code.
+- **Explain missing art by tile and by time.** Collect the union of missing tile codes across repeated runs of the same fight. For each code, inspect the actual disc pack for a usable tile, then check the load and eviction events up to its first missing frame. A tile absent from the planned files calls for a pack change. A tile present on disc calls for checking residency and lookup order. Keep the larger arcade route census alongside these short playback checks.
+- **Test music while the game is reading the disc.** Exercise a track change with a refill pending and a game-data read arriving. Record which request owns the file handle, the result of the next open, the audio buffer's low-water mark and whether the game reaches the next fight. A benchmark played continuously while normal play later failed to open a game file. Retain the failing route as a control and test any shared loader fix with effects alone as well as with streaming enabled. Verify refill timing on the target console and drive.
+
 ## 8. Templates
 
 - [Lane brief](templates/LANE-BRIEF.md)
