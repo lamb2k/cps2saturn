@@ -293,8 +293,9 @@ ending on the emulator, home modes. What it taught:
 
 ### From the v0.1.3 beta fixes
 
-These lessons come from the shipped AvP beta and its headless regression checks. The earlier WASCA boot failure
-was reported on a physical Saturn. The new boot path still needs a retest on that setup.
+These lessons come from the AvP beta and its headless regression checks. On the reported Satiator/WASCA setup,
+the safe beta booted and cleared 1-1, then stopped while loading 1-2. Record boot and later stage loads as separate
+hardware results. [Safe beta hardware retest](https://github.com/lamb2k/avpsaturn/issues/3#issuecomment-7107913948)
 
 1. **Keep boot failures specific.** Record the build, loader step, error detail, compressed block and bytes read.
    Compare normal and safe cartridge timing with the same game data and firmware. If both stop at the same block,
