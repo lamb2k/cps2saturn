@@ -18,8 +18,8 @@ description: Running a CPS2-to-Saturn port with several AI agents at once. Use w
 - Name lanes by intent (`lane/duel`, `lane/rounds`, `lane/audio`), not by number.
 - Every lane has a worktree, a branch, an evidence folder and a scratch folder of its own. Never twin trees: two
   worktrees of the same branch, or two lanes building in one folder, give silent cross-talk.
-- Lanes commit locally to their lane branch. The coordinator merges into the main branch and pushes. Lanes push
-  their branch as WIP at least hourly so nothing is lost if a machine fails.
+- Use the project's commit and backup policy. Record a lane's local tip and its remote branch when handing work back.
+  Name the reusable change and the branch where the next port will be able to find it.
 
 ## The brief
 
@@ -119,15 +119,18 @@ Keep that kind of control in the brief next time.
 ## Sessions end; work must not
 
 - Before a pause, write a handover in the workspace: what is live, every open lane with branch, tip and next step,
-  what was committed or pushed, and the traps found. Commit and push every dirty worktree as a WIP branch first.
+  what was committed or pushed, any local-only changes or evidence, and the traps found.
 - A resume reads the handover, then checks for work done since: newer branches, evidence folders, and notes from
   other sessions (local or cloud). The handover can be days stale.
 - Keep a one-line pointer to the handover in the agent's memory index.
 
 ## Branches drift
 
-Lane branches can run hundreds of commits ahead of the default branch while the front page sits on the default.
-At each release, cut from the shipped source and make that the default; don't let the default branch rot.
+For a reusable result, check the kit's default branch and the lane diff. Squash merges can leave different
+commit IDs with the same implementation. Compare files and tests before carrying a change over.
+Move proven game-neutral tools, synthetic fixtures and their skill entry points together. Keep the per-game
+addresses, captures and packs in the port. A new checkout should be able to find and test the common method
+using the default branch. Record any genuinely unfinished lane and its remaining check in the handover.
 
 ## Permission and safety denials
 

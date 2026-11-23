@@ -54,8 +54,7 @@ Write like a person talking to players, not like a status report:
 
 ## Branches
 
-- Lane branches often run far ahead of the default branch. Cut the release branch from the release disc's source
-  commit, merge the docs branches into it, and make it the default branch.
+- Identify the commit used to build the tested disc. Bring the reviewed code and release notes into the project's integration branch and record the tested source in the release. Requalify the image if integration changes its contents.
 - Other sessions (cloud or local) may have drafted notes or media on their own branches. Find and merge them before
   writing your own.
 - Tag the release commit and push the tag before creating the release.
@@ -70,7 +69,7 @@ Going public exposes every branch and every commit, not just the default branch.
 
 ## Publish
 
-1. Push the release branch and tag; set the default branch.
+1. Publish the approved release commit and its tag according to the project’s release policy.
 2. Create the release (prerelease for a beta) with the disc zip and its SHA-256 in the notes.
 3. Change visibility only after the release looks right.
 4. Check as a signed-out visitor: front page, release images, asset download.

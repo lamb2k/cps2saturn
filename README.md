@@ -25,14 +25,19 @@ Saturn side (VDP1/VDP2, SCSP, CD, cart) is written natively. It is not an emulat
 
 ## Quick start
 
-1. Install the requirements below.
-2. Copy `configs/avspu.example.yaml` to `configs/<yourset>.yaml` and fill in your game's values. Keep it out of git
-   if it holds anything derived from the ROM beyond addresses.
-3. Run the smoke tests: `python -m unittest discover -s tests -v`. They need no ROM.
-4. Read the playbook's phase 0 and the new-game checklist, then run the first MAME capture
-   (`tools/mame_golden_run.py --config configs/<yourset>.yaml --dry-run` shows the command it would run).
-5. Install the skills for Claude Code: copy each folder under `skills/` to `~/.claude/skills/` (or to your
-   project's `.claude/skills/`). Start with `cps2-saturn-port`.
+Start from the kit's `main` branch. Record the kit commit in the game's private STATUS file so a build can be reproduced. The platform code, checks and porting skills are indexed below.
+
+1. Install the requirements below and run `python -m unittest discover -s tests -v` from the kit root. Record skipped checks and their missing dependencies.
+2. Copy [the CPS2 worked example](configs/avspu.example.yaml) to a private config for your set. Replace the game's IRQ tap, object table, input bindings and stage list with values verified in your pinned MAME. Set the ROM, work and settings-baseline paths for your machine.
+3. Preview the first capture with `python tools/mame_golden_run.py --config configs/<set>.yaml --name attract-a --dry-run`. Inspect the set, IRQ tap, input providers and output directory. Once these agree with your setup, run it without `--dry-run`. Repeat under a fresh name, `attract-b`, and compare the recordings with `tools/golden_reader.py diff`.
+4. Follow the [new-game checklist](playbook/PLAYBOOK.md#5-new-game-setup-checklist) through the first host comparison. Start with the [porting skill](skills/cps2-saturn-port/SKILL.md). Claude Code users can install the folders under `skills/` in their project's `.claude/skills/`; other agents can read the same files in place.
+
+| When you need to… | Start here |
+| --- | --- |
+| Capture the first reproducible arcade scene | [Capture tools and route format](tools/README.md), [capture skill](skills/cps2-capture/SKILL.md) |
+| Bring up the first playable Saturn image | [Platform module interfaces and integration order](saturn/README.md), [bring-up skill](skills/saturn-bringup/SKILL.md) |
+| Diagnose slow fights or disputed timing | [Performance skill](skills/saturn-perf/SKILL.md), [cross-port measurement lessons](playbook/PLAYBOOK.md#what-the-follow-up-checks-caught) |
+| Verify a build and prepare a hardware test | [Hardware checks](tools/README.md#hardware-gates), [release skill](skills/saturn-release/SKILL.md) |
 
 ## Skills
 

@@ -82,7 +82,10 @@ run with a timeout and kill only the processes your run started.
   time. Report the evidence that both arms matched (picks, stage, the frame the fight started).
 - A counter that reads differently between two runs of one image (a missing-tile count of 0 and then 370) is not a
   result for either arm. Run each arm at least twice before comparing.
-- Three runs, or three boot delays, for any figure that decides a default. Give the spread.
+- Three runs, or three boot delays, for any figure that decides a default. Pair by route and delay and give the
+  spread for complete pairs. At the same delivered ticks compare RNG, fighter state and work RAM. If a new feature
+  writes RAM, identify the differing fields before claiming gameplay parity. Report how many checkpoints both
+  arms reached and whether either stopped early.
 - Give every run a time limit of its own. A run that hangs (a route stuck at a menu) otherwise holds an emulator
   slot until someone notices. Write the routes and settings that hang into the lane rules.
 
@@ -102,3 +105,5 @@ markers reached (stage words, clear flags), and stills. One line per run in the 
 
 Run every golden after any change to lifted code or the kernel. A host check of the whole game takes about a minute;
 it covers most regressions faster than any emulator run.
+
+For full or delta captures in the kit's golden format, run [golden_matrix.py](../../tools/golden_matrix.py) against the declared routes and delay labels. It checks paired IRQ numbers, record counts, work RAM and object RAM. Keep build identity, controller inputs, selected teams and performance counters in the run record. See the [tool examples](../../tools/README.md).
