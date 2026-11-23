@@ -1,13 +1,13 @@
 ---
 name: saturn-audio
-description: Audio for CPS2-to-Saturn ports, and for CPS-1 and CPS-Dash ports (experimental). Use for moving QSound effects to SCSP PCM, music to CDDA tracks, the game's sound command path, per-channel versus mixed-stream playback, SCSP RAM budgets per stage, the sound test and music player in home menus, and comparing emulator audio output against MAME.
+description: Audio for CPS2-to-Saturn ports, and for CPS-1 and CPS-Dash ports (experimental). Use for moving QSound effects to SCSP PCM, music to CDDA tracks, the game's sound command path, per-channel effects, disc-streamed music during game-data reads, SCSP RAM budgets per stage, the sound test and music player in home menus, and comparing emulator audio output against MAME.
 ---
 
 # Saturn audio for CPS2 ports
 
 ## Shape
 
-- **Music to CDDA.** Render each song from MAME to 44.1 kHz stereo and put it on the disc as audio tracks. Cap the
+- **CDDA for scenes with an available drive.** Render each song from MAME to 44.1 kHz stereo and put it on the disc as audio tracks. Cap the
   render length (AvP used 80 s with a loop) to fit the disc budget.
 - **Effects to SCSP PCM.** Extract each QSound effect sample, resample to an SCSP rate, and load the stage's set
   into SCSP RAM at stage load.
@@ -53,6 +53,17 @@ priority and report what dropped. Load clips at stage boundaries only.
   every slot's registers, including that send, while a cached "level already set" flag stopped the rewrite: CD music
   was silent from power-on until the first stage. Invalidate cached hardware state on every bulk register clear,
   and check music on the title, story and select screens, not only in a stage.
+
+## Fight music with concurrent data reads
+
+When the game needs the drive during a fight, measure whether the pre-fight load can cover those reads.
+For a disc-streamed PCM alternative, reserve SCSP buffer space alongside effects. Log the lowest buffered
+sample count, underruns, refill wait in vblanks and late effects during ordinary play. Exercise track changes
+while a refill is pending and game data is requested. Trace which caller owns the handle on a failed open
+and verify the next game-data read succeeds. Run effects alone as a control if both modes share the loader.
+
+Use the same teams and stage to compare effects-only and streaming costs. Take a normal route through select,
+the fight and the next load as well. Report drive and audible playback results on the target Saturn.
 
 ## Silent drops
 

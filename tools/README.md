@@ -13,6 +13,7 @@ Run the smoke tests with `python -m unittest discover -s tests -v`. They use syn
 | `mame/golden.lua` | capture | Golden run: per-IRQ registers + work RAM + object RAM (full or delta), I/O log, route playback, state saves. On CPS-1 and CPS-Dash it taps the program space (no opcode view) and follows the object base register |
 | `mame_golden_run.py` | capture | Runs MAME with `golden.lua` from the config; seeds `nvram/` and `cfg/` from baselines; `--dry-run` prints the command |
 | `golden_reader.py` | capture, host check | Reads full or delta goldens; shows changed words; finds the first difference between two |
+| `golden_matrix.py` | capture, host check | Checks each required route and boot delay for equal-length captures with matching IRQ numbers, work RAM and object RAM |
 | `mame/dump_code_spaces.lua` | capture | Dumps the program and decrypted opcode views over a range (program only on CPS-1 and CPS-Dash) |
 | `mame/dump_rom_window.lua` | capture | Dumps one program-space window (script tables) |
 | `mame/list_inputs.lua` | capture | Prints every input port and field, for the config's route bits |
@@ -31,6 +32,21 @@ Run the smoke tests with `python -m unittest discover -s tests -v`. They use syn
 | `audio_compare.py` | audio | Emulator audio capture against a MAME reference: offset, envelope correlation, level |
 
 Not ported, and why: [NOT-PORTED.md](NOT-PORTED.md).
+
+## Comparing a set of captures
+
+Keep two capture directories outside git. In each, put a golden from the same input route and
+boot delay under `ROUTE/DELAY.bin` (for example `solo/d0.bin`). Capture the same IRQ window
+on both sides. Supply every route and delay you intended to run, including any still missing.
+
+```sh
+python tools/golden_matrix.py baseline candidate --config configs/avspu.example.yaml --routes solo join --delays d0 d1 d2
+```
+
+Add `--delta` for two delta-format sets. Each pair must contain at least one complete record.
+A missing file, different IRQ, changed work/object RAM, or shorter capture fails the comparison.
+The check covers the recorded IRQs. Keep audio, rendered pixels, frame timing and hardware
+results with their own checks.
 
 ## Platform tree tools
 

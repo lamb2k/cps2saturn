@@ -88,6 +88,12 @@ then it wakes nothing and that tick is lost, although the master did the same wo
 - Put compiler runtime helpers (division, shifts, memcpy) in fast RAM too; hot code calls them constantly.
 - Stacks and per-frame hot data go in fast RAM. A snapshot the slave reads every vblank should not live in low RAM.
 
+## Measure the cost at the caller
+
+Count calls, accepted work per call and declined calls on the game routes. Include argument preparation, fallback
+and placement overhead when comparing a fast kernel to the existing path. Compare a hot copy with ordinary
+resident code given the same fast-RAM budget. Record both the affected cost category and the whole-tick result.
+
 ## Remove repeated work first
 
 The biggest exact win is usually work done again for nothing. AvP redrew its whole text layer on any change, and

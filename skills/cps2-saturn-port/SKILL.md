@@ -14,9 +14,13 @@ The project's own STATUS.md, backlog and owner instructions outrank this skill. 
 
 1. Read the project's `docs/STATUS.md` (the one source of current state), `docs/BACKLOG.md`, the agent file
    (`AGENTS.md` / `CLAUDE.md`) and the latest hand-back. Check `git status`, branch and recent commits.
-2. Check git history across branches before estimating a problem: it is often already solved somewhere.
+2. Start with the kit's default branch. Use `tools/README.md` to find a converter or check and `saturn/README.md`
+   for the platform code and what the game supplies. Run `python -m unittest discover -s tests -v` from the kit
+   checkout for the ROM-free baseline. Look up a lane branch when the project handover points to unfinished work.
 3. Confirm the ROM set is present locally and audited (`mame -verifyroms <set>`). Never copy or commit it.
-4. Find the per-game config (`configs/<set>.yaml`). Every tool reads game constants from it. Its `game.board`
+4. For a new CPS2 port, copy `configs/avspu.example.yaml` to a private game config and replace the example set,
+   paths, memory layout and route inputs. Preview the capture with
+   `python tools/mame_golden_run.py --config configs/<set>.yaml --name first-boot --dry-run`. Its `game.board`
    (`cps2`, `cps1`, `cpsdash`) says which board's rules the tools use; CPS-1 and CPS-Dash support is experimental,
    see `docs/design/cps1-dash-boards.md` in the kit for what is proven.
 
@@ -27,7 +31,7 @@ The project's own STATUS.md, backlog and owner instructions outrank this skill. 
   big-endian RAM at original offsets), prove it against MAME on host, then replace hot or unclear functions with
   readable C, each behaviour-gated.
 - **Native platform layer.** Pads through the game's own input latch, VDP1 sprites, VDP2 scroll layers, SCSP sound
-  effects, CDDA music, round files from CD, cart residency. The game logic never calls hardware directly.
+  effects, music playback, round files from CD, cart residency. The game logic never calls hardware directly.
 - **Two CPUs.** Game logic on the master SH-2, drawing on the slave from a per-frame snapshot, one handoff per frame.
 
 Screen capture is for evidence and regression oracles. ROM translation is for anything systematic (animation,
@@ -59,7 +63,7 @@ Never skip a gate silently. If a gate cannot run, say so and say why.
 
 - MAME capture, goldens, watchpoints, debug menus: `cps2-capture`.
 - Tiles, sprites, scroll layers, crop, HUD, cart pages, round files: `saturn-graphics`.
-- QSound, SCSP clips, CDDA tracks, sound test, music player: `saturn-audio`.
+- QSound, SCSP clips, CDDA tracks, streamed music during disc reads, sound test, music player: `saturn-audio`.
 - Lifting, readable C, host differential, parity tests: `sh2-game-logic`.
 - ISO, cue, IP.BIN, CD-R budget, shared sector store, web builds: `saturn-packaging`.
 - Yaba MCP runs, pad scripts, stills, evidence labels: `emulator-testing`.

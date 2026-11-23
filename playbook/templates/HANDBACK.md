@@ -25,6 +25,7 @@ Image: <file> sha256 <hash>, build flags <flags>, emulator copy and settings <na
 Runs per figure: <n; three for anything that decides a default, with the spread>.
 Controls: <for each A/B or gate, the evidence that both arms played the same scene, and the check that can fail>.
 Budget line: <row, gain expected in the brief, gain measured>.
+For reusable work, list the kit module or tool, its synthetic regression, the skill that explains it, and the kit commit or pending pull request.
 
 ## Premises checked
 

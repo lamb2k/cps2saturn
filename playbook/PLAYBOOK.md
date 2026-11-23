@@ -171,6 +171,12 @@ and keep a lane to one question of about three hours (`skills/agent-orchestratio
 - On a wake: did the step finish, what does the log say, message the lane to continue.
 - Report only what was measured.
 
+### Bring shared work back into the kit
+
+When a port fixes a platform bug or adds a diagnostic, look up the corresponding module in the [platform inventory](../saturn/README.md) or the [tool index](../tools/README.md). Extend that entry and its tests. Keep the game-specific adapter, constants and capture data with the port. A useful kit test reproduces the failure with synthetic inputs and passes after the fix.
+
+Include the tool's invocation and its result in the relevant skill. Land the implementation, regression test and instructions together in a kit pull request. Record the resulting kit commit in the consuming port. Before reviving a historical lane, compare its behavior and tests with current main: some lanes landed under a different commit after review.
+
 ## 4. Gates per change (lean) and on triggers (full)
 
 Every change:
@@ -201,7 +207,7 @@ Humans judge looks, feel and pacing. Computers judge identity, memory headroom, 
       byte, clear flags, credit byte, health fields. Add each to the config as you find it.
 - [ ] Dump program and opcode spaces; build the merged image.
 - [ ] Record the attract golden; check its replay is deterministic (run twice, same hash).
-- [ ] Write STATUS.md, BACKLOG.md and the agent file from `templates/`.
+- [ ] Start STATUS.md from the [status template](templates/STATUS.md). Keep the ordered backlog and project-specific agent instructions in the game repo.
 - [ ] Decide evidence folders outside git, one per lane.
 - [ ] Set up the hygiene scan as a pre-push step.
 - [ ] Run phase 1 before building anything big.

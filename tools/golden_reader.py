@@ -10,10 +10,11 @@ Output holds RAM values: print to the terminal, do not commit.
 from __future__ import annotations
 
 import argparse
+from itertools import zip_longest
 import pathlib
 import struct
 import sys
-from typing import Iterator
+from typing import BinaryIO, Iterator
 
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -23,6 +24,13 @@ import cfg  # noqa: E402
 HEAD = 8 + 64
 
 
+def read_exact(stream: BinaryIO, size: int) -> bytes:
+    data = stream.read(size)
+    if len(data) != size:
+        raise ValueError(f"truncated record in {stream.name} at offset {stream.tell()}")
+    return data
+
+
 def records(path: pathlib.Path, work_size: int, obj_size: int, delta: bool) -> Iterator[tuple[int, tuple, bytes]]:
     """Yield (irq number, 16 registers, full RAM image work+object) per record. Delta records are applied."""
     total = (work_size + obj_size) // 4
@@ -30,24 +38,55 @@ def records(path: pathlib.Path, work_size: int, obj_size: int, delta: bool) -> I
     with open(path, "rb") as f:
         while True:
             h = f.read(HEAD)
-            if len(h) < HEAD:
+            if not h:
                 return
+            if len(h) < HEAD:
+                raise ValueError(f"truncated record header in {path}")
             if h[:4] != b"VBLK":
                 raise ValueError("bad record marker")
             n = struct.unpack_from(">I", h, 4)[0]
             regs = struct.unpack_from(">16I", h, 8)
             if delta:
-                runs = struct.unpack(">I", f.read(4))[0]
+                runs = struct.unpack(">I", read_exact(f, 4))[0]
                 for _ in range(runs):
-                    b, w = struct.unpack(">HH", f.read(4))
-                    cur[b * 4:(b + w) * 4] = f.read(w * 4)
+                    b, w = struct.unpack(">HH", read_exact(f, 4))
+                    if b + w > total:
+                        raise ValueError(f"delta outside RAM at irq {n} in {path}")
+                    cur[b * 4:(b + w) * 4] = read_exact(f, w * 4)
                 yield n, regs, bytes(cur)
             else:
-                yield n, regs, f.read(work_size + obj_size)
+                yield n, regs, read_exact(f, work_size + obj_size)
 
 
 def sizes(c: dict) -> tuple[int, int, int]:
     return cfg.get(c, "ram.work_base"), cfg.get(c, "ram.work_size"), boards.object_size(c)
+
+
+def compare(left: pathlib.Path, right: pathlib.Path, base: int, ws: int, os_: int,
+            delta: bool) -> tuple[bool, str]:
+    """Compare IRQ numbers and work/object RAM through the end of both captures."""
+    a = records(left, ws, os_, delta)
+    b = records(right, ws, os_, delta)
+    count = 0
+    try:
+        for ra, rb in zip_longest(a, b):
+            if ra is None or rb is None:
+                return False, f"capture lengths differ after {count} records"
+            ia, _, ma = ra
+            ib, _, mb = rb
+            if ia != ib:
+                return False, f"IRQ mismatch at record {count}: {ia}/{ib}"
+            if ma != mb:
+                o = next(i for i in range(0, len(ma), 4) if ma[i:i + 4] != mb[i:i + 4])
+                where = f"work {base + o:x}" if o < ws else f"object +{o - ws:x}"
+                return False, f"first difference at record {count} (irq {ia}/{ib}): {where}"
+            count += 1
+    finally:
+        a.close()
+        b.close()
+    if not count:
+        return False, "both captures are empty"
+    return True, f"identical over {count} records"
 
 
 def main(argv=None) -> int:
@@ -82,17 +121,13 @@ def main(argv=None) -> int:
                 print(irq, f"pc {r[0]:x} d0 {r[1]:x} a0 {r[9]:x} a4 {r[13]:x} a6 {r[15]:x}", " ".join(ch))
             prev = img
     else:
-        ra = records(pathlib.Path(a.args[0]), ws, os_, a.delta)
-        rb = records(pathlib.Path(a.args[1]), ws, os_, a.delta)
-        count = 0
-        for (ia, _, ma), (ib, _, mb) in zip(ra, rb):
-            if ma != mb:
-                o = next(i for i in range(0, len(ma), 4) if ma[i:i + 4] != mb[i:i + 4])
-                where = f"work {base + o:x}" if o < ws else f"object +{o - ws:x}"
-                print(f"first difference at record {count} (irq {ia}/{ib}): {where}")
-                return 1
-            count += 1
-        print(f"identical over {count} records")
+        try:
+            ok, message = compare(pathlib.Path(a.args[0]), pathlib.Path(a.args[1]), base, ws, os_, a.delta)
+        except (OSError, ValueError) as exc:
+            print(f"bad capture: {exc}", file=sys.stderr)
+            return 2
+        print(message)
+        return 0 if ok else 1
     return 0
 
 

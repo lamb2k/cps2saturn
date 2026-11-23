@@ -1,6 +1,6 @@
 ---
 name: best-practices
-description: Checklist of working rules for CPS2-to-Saturn ports. Use before landing a change, cutting a release, proposing an optimisation, reporting results, or setting up a new project: data-driven code, measure first, byte-identity proofs for build changes, feature flags that keep normal play unchanged, front pages and release notes with stills, disk hygiene, evidence labels and repo hygiene.
+description: Checklist of working rules for CPS2-to-Saturn ports. Use before landing a change, cutting a release, proposing an optimisation, reporting results, or setting up a new project. Covers data-driven code, measure first, byte-identity proofs for build changes, feature flags that keep normal play unchanged, front pages and release notes with stills, disk hygiene, evidence labels and repo hygiene.
 ---
 
 # Best practices checklist

@@ -88,8 +88,17 @@ Budgets are separate: work RAM high (1 MB) and low (1 MB), VDP1 VRAM (512 KB), V
 - **Drop ranking.** When a stage's tiles do not fit, drop the lowest-ranked keys first. Rank by use: keys seen in
   the real full route score highest, KO/continue keys next, walk-only keys lowest. Report dropped counts per file.
 - `tools/page_plan.py` computes shared pages, per-file keep sets and ranked drops from census JSON.
-- Load only at stage boundaries, with the display blanked and NOW LOADING shown. Nothing loads mid-stage, and no
-  data seeks while CDDA plays unless measured safe.
+- Budget loads at the transition where the old pack can be released. Record remaining in-fight reads and how
+  long the transition holds. Check any loading text on both short and long holds and compare the first resumed
+  frame with the indicator disabled.
+
+## Missing art
+
+First compare the arcade route's drawn codes with the actual packed files its plan requests. During repeated
+playback of a matched scene, take the union of missing codes and retain the first frame each was requested.
+Distinguish a missing tile from a blank or filler slot. For a tile present in the image, trace planned load,
+completed load, eviction and lookup order to determine whether its file was resident at that frame.
+Compare the resulting frame against MAME before assigning a visible defect.
 
 ## Traps
 

@@ -38,7 +38,7 @@ coordinator at once if one is wrong>
 - A/B controls play the same scene, keyed by game frame. Three runs for any figure that decides a default.
 - A refused tool call: stop, report it, do not run a rewritten form.
 - No game material in commits. Run `tools/hygiene_scan.py` before any push.
-- Commit to the lane branch; push it as WIP at least hourly. The coordinator lands.
+- Record the lane branch, base commit, backup policy and integration owner before work starts.
 - Never end a turn waiting: poll your own job's marker with a bounded wait.
 
 **Ask the owner only for:** looks, gameplay-visible choices, outward posts, deletions. Everything else: do it.
