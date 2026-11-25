@@ -13,6 +13,18 @@ description: Packaging Saturn builds of CPS2 ports. Use for building the ISO dat
 - `tools/make_cue.py` writes the cue from a data image and a folder of track files, plus `SHA256SUMS.txt` with the
   commit (a `#` line, which `sha256sum -c` skips).
 
+## ODE package verification
+
+- Check the supported CUE and data-track formats for the target optical drive emulator (ODE) and firmware. Record the
+  data mode, track count and number of files. A CUE that mounts in a software emulator can still fail on the target ODE.
+- Verify every CUE `FILE` entry resolves to the intended file in the delivered package, including the spelling and
+  extension. Honor the target's directory and path rules. When staging to an SD card, verify the manifest against the
+  files read back from the card.
+- For a new mixed-mode layout, keep a one-track boot control ready. In a separate test folder, reference the same data
+  track from a CUE with only track 1 in its original mode and index. Confirm the data-track hash. Cold-boot the exact
+  final mixed-mode package and verify CDDA playback on the target before accepting its hardware results.
+  See [boot isolation](../saturn-bringup/SKILL.md#isolate-ode-boot-failures).
+
 ## IP.BIN
 
 Check the fields you depend on before patching: IP size at 0xE0 (0x1800 for a stock header), first-read load
