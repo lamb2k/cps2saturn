@@ -13,8 +13,9 @@ clean, and plan the first hardware discs as diagnostic tools, not as releases.
 - **Diagnostics from the first instruction.** Colour bands or bit-stripe codes on screen at each boot stage, a stop
   code on fatals, and a build id on every screen that has a readout. The owner photographs the CRT; you decode the
   photo. CRT photos show diagonal shutter bands: don't read them as picture faults.
-- **Rule out the disc first.** Boot a known-good homebrew disc from the same drive (optical drive emulator or burned
-  CD) before blaming the program. Check IP.BIN fields and the first-read size (see `saturn-packaging`).
+- **Start with a known-good disc.** Check the outgoing package and IP.BIN as described in
+  [Saturn packaging](../saturn-packaging/SKILL.md). Follow [boot isolation](#isolate-ode-boot-failures) if the
+  target drive fails to launch it.
 - **Static gates that catch what emulators don't** (all cheap, all in the build):
   - VDP2 VRAM access-cycle check (below), `tools/vdp2_cycle_check.py`. Add its writer scan
     (`--scan-writers saturn --allow tools/vdp2_writers_allow.txt`): a diagnostic or special screen that writes the
@@ -29,6 +30,19 @@ clean, and plan the first hardware discs as diagnostic tools, not as releases.
   `--expect-hits` checks that the patched emulator writes the log at all. The kit has no emulator patch: GPL code
   stays out of it, so write your own against the log format.
 - Write a hardware test sheet: what to photograph, which screens, what the readout lines mean.
+
+## Isolate ODE boot failures
+
+1. Cold-boot a known-working disc on the same Saturn, ODE, card and cartridge. Record the exact failing CUE, error
+   and last visible screen. Distinguish the ODE menu and BIOS logo from the game's first loader screen or boot code.
+2. For a retry error or hang before the loader screen, verify the card copy and run the one-track control with the
+   byte-identical data image. Keep the console setup and boot code fixed. Record the furthest screen reached by each
+   package.
+3. If the control boots and the mixed-mode package fails, investigate the CUE layout and the ODE's handling of it first.
+   The layout is the next variable to isolate. Verify the data and CDDA bytes
+   if repackaging, then cold-boot and check audio with the full package on hardware. Record playback faults separately
+   from boot, with the exact CUE used. For a failure after loader entry, capture its first failure code to narrow the
+   boot stage and record the file and expected and actual byte counts if it reports a failed read.
 
 ## Diff register writes against a known-good program
 
